@@ -1,184 +1,321 @@
-# ============================================================
-# Fantasy F1 2026 — Master Configuration
-# ============================================================
-# Every manual parameter lives here. Update this file before
-# each race weekend — no Python code changes needed.
-#
-# How to use:
-#   1. Before each race: update weather_override, optionally
-#      adjust team development_score or regulation_adaptation
-#   2. After each race: update current_team, budget, transfers,
-#      and regulation.era_weight as the season picture clears
-#   3. Supply price threshold tables in data/fantasy/ each week
-# ============================================================
-
-
-# --- Season Setup ---
 season:
   year: 2026
   total_rounds: 24
-  # Sprint weekends (3 scoring sessions: qualifying + sprint + race)
-  sprint_rounds: [2, 6, 7, 11, 14, 18]
-  # R2 China, R6 Miami, R7 Canada, R11 Great Britain, R14 Netherlands, R18 Singapore
-
-  # Calendar: round_number -> (name, country, date_range)
+  sprint_rounds:
+  - 2
+  - 6
+  - 7
+  - 11
+  - 14
+  - 18
   calendar:
-    1:  {name: "Australia",      country: "AUS", dates: "6-8 Mar"}
-    2:  {name: "China",          country: "CHN", dates: "13-15 Mar"}
-    3:  {name: "Japan",          country: "JPN", dates: "27-29 Mar"}
-    4:  {name: "Bahrain",        country: "BHR", dates: "10-12 Apr", cancelled: true}
-    5:  {name: "Saudi Arabia",   country: "SAU", dates: "17-19 Apr", cancelled: true}
-    6:  {name: "Miami",          country: "USA", dates: "1-3 May"}
-    7:  {name: "Canada",         country: "CAN", dates: "22-24 May"}
-    8:  {name: "Monaco",         country: "MON", dates: "5-7 Jun"}
-    9:  {name: "Barcelona",      country: "ESP", dates: "12-14 Jun"}
-    10: {name: "Austria",        country: "AUT", dates: "26-28 Jun"}
-    11: {name: "Great Britain",  country: "GBR", dates: "3-5 Jul"}
-    12: {name: "Belgium",        country: "BEL", dates: "17-19 Jul"}
-    13: {name: "Hungary",        country: "HUN", dates: "24-26 Jul"}
-    14: {name: "Netherlands",    country: "NLD", dates: "21-23 Aug"}
-    15: {name: "Italy",          country: "ITA", dates: "4-6 Sep"}
-    16: {name: "Spain",          country: "ESP", dates: "11-13 Sep"}
-    17: {name: "Azerbaijan",     country: "AZE", dates: "24-26 Sep"}
-    18: {name: "Singapore",      country: "SGP", dates: "9-11 Oct"}
-    19: {name: "United States",  country: "USA", dates: "23-25 Oct"}
-    20: {name: "Mexico",         country: "MEX", dates: "30 Oct-1 Nov"}
-    21: {name: "Brazil",         country: "BRA", dates: "6-8 Nov"}
-    22: {name: "Las Vegas",      country: "USA", dates: "19-21 Nov"}
-    23: {name: "Qatar",          country: "QAT", dates: "27-29 Nov"}
-    24: {name: "Abu Dhabi",      country: "ARE", dates: "4-6 Dec"}
-
-
-# --- Fantasy Scoring Rules (hardcoded from official rules) ---
+    1:
+      name: Australia
+      country: AUS
+      dates: 6-8 Mar
+    2:
+      name: China
+      country: CHN
+      dates: 13-15 Mar
+    3:
+      name: Japan
+      country: JPN
+      dates: 27-29 Mar
+    4:
+      name: Bahrain
+      country: BHR
+      dates: 10-12 Apr
+      cancelled: true
+    5:
+      name: Saudi Arabia
+      country: SAU
+      dates: 17-19 Apr
+      cancelled: true
+    6:
+      name: Miami
+      country: USA
+      dates: 1-3 May
+    7:
+      name: Canada
+      country: CAN
+      dates: 22-24 May
+    8:
+      name: Monaco
+      country: MON
+      dates: 5-7 Jun
+    9:
+      name: Barcelona
+      country: ESP
+      dates: 12-14 Jun
+    10:
+      name: Austria
+      country: AUT
+      dates: 26-28 Jun
+    11:
+      name: Great Britain
+      country: GBR
+      dates: 3-5 Jul
+    12:
+      name: Belgium
+      country: BEL
+      dates: 17-19 Jul
+    13:
+      name: Hungary
+      country: HUN
+      dates: 24-26 Jul
+    14:
+      name: Netherlands
+      country: NLD
+      dates: 21-23 Aug
+    15:
+      name: Italy
+      country: ITA
+      dates: 4-6 Sep
+    16:
+      name: Spain
+      country: ESP
+      dates: 11-13 Sep
+    17:
+      name: Azerbaijan
+      country: AZE
+      dates: 24-26 Sep
+    18:
+      name: Singapore
+      country: SGP
+      dates: 9-11 Oct
+    19:
+      name: United States
+      country: USA
+      dates: 23-25 Oct
+    20:
+      name: Mexico
+      country: MEX
+      dates: 30 Oct-1 Nov
+    21:
+      name: Brazil
+      country: BRA
+      dates: 6-8 Nov
+    22:
+      name: Las Vegas
+      country: USA
+      dates: 19-21 Nov
+    23:
+      name: Qatar
+      country: QAT
+      dates: 27-29 Nov
+    24:
+      name: Abu Dhabi
+      country: ARE
+      dates: 4-6 Dec
 scoring:
   qualifying:
-    # Driver position points
-    positions: {1: 10, 2: 9, 3: 8, 4: 7, 5: 6, 6: 5, 7: 4, 8: 3, 9: 2, 10: 1}
-    # P11-P20 = 0 (not listed = 0)
-    dnf_dsq_penalty: -5   # NC / DSQ / No time set
-
-    # Constructor qualifying bonuses
+    positions:
+      1: 10
+      2: 9
+      3: 8
+      4: 7
+      5: 6
+      6: 5
+      7: 4
+      8: 3
+      9: 2
+      10: 1
+    dnf_dsq_penalty: -5
     constructor:
-      neither_q2: -1       # Neither driver reaches Q2
-      one_q2: 1            # One driver reaches Q2
-      both_q2: 3           # Both drivers reach Q2
-      one_q3: 5            # One driver reaches Q3
-      both_q3: 10          # Both drivers reach Q3
-      dsq_per_driver: -5   # DSQ penalty per driver
-
+      neither_q2: -1
+      one_q2: 1
+      both_q2: 3
+      one_q3: 5
+      both_q3: 10
+      dsq_per_driver: -5
   sprint:
-    # Driver position points
-    positions: {1: 8, 2: 7, 3: 6, 4: 5, 5: 4, 6: 3, 7: 2, 8: 1}
-    # P9-P20 = 0
-    position_gained: 1     # +1 per position gained from sprint grid
-    position_lost: -1      # -1 per position lost from sprint grid
-    overtake_bonus: 1      # +1 per overtake made
-    fastest_lap: 5         # +5 for fastest lap in sprint
-    dnf_dsq_penalty: -10   # DNF or DSQ
-
-    # Constructor sprint: sum of both drivers' sprint scores
+    positions:
+      1: 8
+      2: 7
+      3: 6
+      4: 5
+      5: 4
+      6: 3
+      7: 2
+      8: 1
+    position_gained: 1
+    position_lost: -1
+    overtake_bonus: 1
+    fastest_lap: 5
+    dnf_dsq_penalty: -10
     constructor:
       dsq_per_driver: -10
-
   race:
-    # Driver position points
-    positions: {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1}
-    # P11-P20 = 0
-    position_gained: 1     # +1 per position gained from race grid
-    position_lost: -1      # -1 per position lost from race grid
-    overtake_bonus: 1      # +1 per overtake made
-    fastest_lap: 10        # +10 for fastest lap
-    dotd: 10               # +10 for Driver of the Day
-    dnf_dsq_penalty: -20   # DNF or DSQ
-
-    # Constructor race scoring
+    positions:
+      1: 25
+      2: 18
+      3: 15
+      4: 12
+      5: 10
+      6: 8
+      7: 6
+      8: 4
+      9: 2
+      10: 1
+    position_gained: 1
+    position_lost: -1
+    overtake_bonus: 1
+    fastest_lap: 10
+    dotd: 10
+    dnf_dsq_penalty: -20
     constructor:
-      # Sum of both drivers' race scores (excluding DOTD)
       dsq_per_driver: -20
-
-      # Pitstop bonus tiers (based on fastest pitstop of the race weekend)
       pitstop_tiers:
         over_3_0s: 0
         2_50_to_2_99s: 2
         2_20_to_2_49s: 5
         2_00_to_2_19s: 10
         under_2_0s: 20
-      fastest_pitstop_bonus: 5      # Bonus for having the fastest pitstop
-      world_record_bonus: 15        # Sub-1.8s new world record pitstop
-
-  # Important rule notes (encoded in the scoring functions):
-  # - Positions gained/lost = race GRID start vs finish (NOT qualifying vs finish)
-  # - Pit lane start = treated as last grid position for positions-gained calc
-  # - DNF/Not Classified = flat penalty only, no positions-lost on top
-  # - Inactive/non-participating drivers also receive the DNF penalty
-
-
-# --- Fantasy Game Rules ---
+      fastest_pitstop_bonus: 5
+      world_record_bonus: 15
 fantasy:
-  budget: 100.0              # $100M starting budget
-  num_drivers: 5             # 5 drivers per team
-  num_constructors: 2        # 2 constructors per team
-  free_transfers_per_race: 2 # 2 free transfers per race window
-  max_banked_transfers: 1    # 1 unused transfer carries over (no accumulation)
-  extra_transfer_cost: -10   # Points penalty per extra transfer beyond allowance
-  drs_boost_multiplier: 2    # DRS Boost = 2x one driver's full weekend score
-
-  # Chips (one per race max, each usable only once per season)
+  budget: 100.0
+  num_drivers: 5
+  num_constructors: 2
+  free_transfers_per_race: 2
+  max_banked_transfers: 1
+  extra_transfer_cost: -10
+  drs_boost_multiplier: 2
   chips:
     available_immediately:
-      - autopilot          # Retroactively gives DRS Boost to highest-scoring driver
-      - extra_drs_boost    # Adds a 3x DRS slot ON TOP OF the regular 2x slot (two drivers get boosted that weekend)
-      - no_negative        # Floors score at 0 per scoring category (not overall)
+    - autopilot
+    - extra_drs_boost
+    - no_negative
     unlocked_after_race_1:
-      - wildcard           # Unlimited free transfers for that race window
-      - limitless          # Unlimited transfers AND no budget cap (reverts after race)
-      - final_fix          # One penalty-free transfer between qualifying end and race start
-
-
-# --- Current 2026 Prices (updated after R2 China) ---
+    - wildcard
+    - limitless
+    - final_fix
 prices:
   drivers:
-    VER: {name: "Max Verstappen",    team: "red_bull",      price: 28.1}
-    RUS: {name: "George Russell",    team: "mercedes",      price: 28.0}
-    NOR: {name: "Lando Norris",      team: "mclaren",       price: 26.8}
-    PIA: {name: "Oscar Piastri",     team: "mclaren",       price: 24.9}
-    ANT: {name: "Kimi Antonelli",    team: "mercedes",      price: 23.8}
-    LEC: {name: "Charles Leclerc",   team: "ferrari",       price: 23.4}
-    HAM: {name: "Lewis Hamilton",    team: "ferrari",       price: 22.9}
-    HAD: {name: "Isack Hadjar",      team: "red_bull",      price: 13.9}
-    GAS: {name: "Pierre Gasly",      team: "alpine",        price: 12.8}
-    SAI: {name: "Carlos Sainz",      team: "williams",      price: 12.2}
-    ALB: {name: "Alexander Albon",   team: "williams",      price: 10.8}
-    ALO: {name: "Fernando Alonso",   team: "aston_martin",  price: 8.8}
-    BEA: {name: "Oliver Bearman",    team: "haas",          price: 8.6}
-    OCO: {name: "Esteban Ocon",      team: "haas",          price: 8.5}
-    LIN: {name: "Arvid Lindblad",    team: "racing_bulls",  price: 7.4}
-    COL: {name: "Franco Colapinto",  team: "alpine",        price: 7.0}
-    LAW: {name: "Liam Lawson",       team: "racing_bulls",  price: 6.9}
-    STR: {name: "Lance Stroll",      team: "aston_martin",  price: 6.8}
-    BOR: {name: "Gabriel Bortoleto", team: "audi",          price: 6.4}
-    PER: {name: "Sergio Perez",      team: "cadillac",      price: 6.4}
-    HUL: {name: "Nico Hulkenberg",   team: "audi",          price: 5.6}
-    BOT: {name: "Valtteri Bottas",   team: "cadillac",      price: 4.7}
-
+    VER:
+      name: Max Verstappen
+      team: red_bull
+      price: 28.4
+    RUS:
+      name: George Russell
+      team: mercedes
+      price: 28.5
+    NOR:
+      name: Lando Norris
+      team: mclaren
+      price: 26.5
+    PIA:
+      name: Oscar Piastri
+      team: mclaren
+      price: 25.0
+    ANT:
+      name: Kimi Antonelli
+      team: mercedes
+      price: 24.7
+    LEC:
+      name: Charles Leclerc
+      team: ferrari
+      price: 24.1
+    HAM:
+      name: Lewis Hamilton
+      team: ferrari
+      price: 23.6
+    HAD:
+      name: Isack Hadjar
+      team: red_bull
+      price: 12.1
+    GAS:
+      name: Pierre Gasly
+      team: alpine
+      price: 12.2
+    SAI:
+      name: Carlos Sainz
+      team: williams
+      price: 12.8
+    ALB:
+      name: Alexander Albon
+      team: williams
+      price: 9.0
+    ALO:
+      name: Fernando Alonso
+      team: aston_martin
+      price: 7.4
+    BEA:
+      name: Oliver Bearman
+      team: haas
+      price: 8.8
+    OCO:
+      name: Esteban Ocon
+      team: haas
+      price: 9.9
+    LIN:
+      name: Arvid Lindblad
+      team: racing_bulls
+      price: 6.4
+    COL:
+      name: Franco Colapinto
+      team: alpine
+      price: 8.8
+    LAW:
+      name: Liam Lawson
+      team: racing_bulls
+      price: 7.9
+    STR:
+      name: Lance Stroll
+      team: aston_martin
+      price: 5.4
+    BOR:
+      name: Gabriel Bortoleto
+      team: audi
+      price: 5.4
+    PER:
+      name: Sergio Perez
+      team: cadillac
+      price: 7.0
+    HUL:
+      name: Nico Hulkenberg
+      team: audi
+      price: 3.8
+    BOT:
+      name: Valtteri Bottas
+      team: cadillac
+      price: 4.5
   constructors:
-    mercedes:      {name: "Mercedes",           price: 29.9}
-    red_bull:      {name: "Red Bull Racing",    price: 28.8}
-    mclaren:       {name: "McLaren",            price: 28.5}
-    ferrari:       {name: "Ferrari",            price: 23.9}
-    alpine:        {name: "Alpine",             price: 13.7}
-    williams:      {name: "Williams",           price: 13.2}
-    aston_martin:  {name: "Aston Martin",       price: 9.1}
-    haas:          {name: "Haas",               price: 8.6}
-    racing_bulls:  {name: "Racing Bulls",       price: 7.5}
-    audi:          {name: "Audi",               price: 5.4}
-    cadillac:      {name: "Cadillac",           price: 5.2}
-
-# --- Historical Opening Prices (for backtests) ---
-# Used by src.price.PriceModel for season-specific backtesting.
-# Values below are 2025 Round 1 opening prices (AUS column) provided manually.
+    mercedes:
+      name: Mercedes
+      price: 29.9
+    red_bull:
+      name: Red Bull Racing
+      price: 28.8
+    mclaren:
+      name: McLaren
+      price: 28.5
+    ferrari:
+      name: Ferrari
+      price: 24.8
+    alpine:
+      name: Alpine
+      price: 13.7
+    williams:
+      name: Williams
+      price: 13.2
+    aston_martin:
+      name: Aston Martin
+      price: 9.1
+    haas:
+      name: Haas
+      price: 10.4
+    racing_bulls:
+      name: Racing Bulls
+      price: 7.5
+    audi:
+      name: Audi
+      price: 5.4
+    cadillac:
+      name: Cadillac
+      price: 5.2
 historical_prices:
-  "2023":
+  '2023':
     drivers:
       VER: 26.9
       HAM: 23.7
@@ -211,7 +348,7 @@ historical_prices:
       audi: 6.2
       williams: 5.1
       haas: 5.3
-  "2024":
+  '2024':
     drivers:
       VER: 30.0
       NOR: 23.0
@@ -244,7 +381,7 @@ historical_prices:
       haas: 6.3
       audi: 6.6
       williams: 6.3
-  "2025":
+  '2025':
     drivers:
       NOR: 29.0
       VER: 28.4
@@ -277,296 +414,237 @@ historical_prices:
       aston_martin: 8.5
       alpine: 9.5
       audi: 6.2
-
-
-# --- Circuit Classification ---
-# Each circuit has characteristics that affect predictions.
-# overtake_difficulty: 0.0 (easy to overtake) to 1.0 (nearly impossible)
-# safety_car_probability: historical frequency of safety cars (0.0-1.0)
-# drs_zones: number of DRS detection/activation zones
-# type: street / power / high_downforce / balanced
-# downforce: high / medium / low
 circuits:
   albert_park:
-    name: "Melbourne"
-    type: "balanced"
-    downforce: "medium"
+    name: Melbourne
+    type: balanced
+    downforce: medium
     overtake_difficulty: 0.5
     safety_car_probability: 0.55
     drs_zones: 4
-
   shanghai:
-    name: "Shanghai"
-    type: "balanced"
-    downforce: "medium"
+    name: Shanghai
+    type: balanced
+    downforce: medium
     overtake_difficulty: 0.3
     safety_car_probability: 0.35
     drs_zones: 2
-
   suzuka:
-    name: "Suzuka"
-    type: "high_downforce"
-    downforce: "high"
+    name: Suzuka
+    type: high_downforce
+    downforce: high
     overtake_difficulty: 0.6
     safety_car_probability: 0.35
     drs_zones: 1
-
   bahrain:
-    name: "Sakhir"
-    type: "balanced"
-    downforce: "medium"
+    name: Sakhir
+    type: balanced
+    downforce: medium
     overtake_difficulty: 0.3
     safety_car_probability: 0.4
     drs_zones: 3
-
   jeddah:
-    name: "Jeddah"
-    type: "street"
-    downforce: "low"
+    name: Jeddah
+    type: street
+    downforce: low
     overtake_difficulty: 0.4
     safety_car_probability: 0.65
     drs_zones: 3
-
   miami:
-    name: "Miami"
-    type: "street"
-    downforce: "medium"
+    name: Miami
+    type: street
+    downforce: medium
     overtake_difficulty: 0.5
     safety_car_probability: 0.5
     drs_zones: 3
-
   montreal:
-    name: "Montreal"
-    type: "power"
-    downforce: "low"
+    name: Montreal
+    type: power
+    downforce: low
     overtake_difficulty: 0.4
     safety_car_probability: 0.6
     drs_zones: 2
-
   monaco:
-    name: "Monaco"
-    type: "street"
-    downforce: "high"
+    name: Monaco
+    type: street
+    downforce: high
     overtake_difficulty: 0.95
     safety_car_probability: 0.6
     drs_zones: 1
-
   barcelona:
-    name: "Barcelona"
-    type: "high_downforce"
-    downforce: "high"
+    name: Barcelona
+    type: high_downforce
+    downforce: high
     overtake_difficulty: 0.6
     safety_car_probability: 0.3
     drs_zones: 2
-
   red_bull_ring:
-    name: "Spielberg"
-    type: "power"
-    downforce: "low"
+    name: Spielberg
+    type: power
+    downforce: low
     overtake_difficulty: 0.35
     safety_car_probability: 0.35
     drs_zones: 3
-
   silverstone:
-    name: "Silverstone"
-    type: "high_downforce"
-    downforce: "high"
+    name: Silverstone
+    type: high_downforce
+    downforce: high
     overtake_difficulty: 0.5
     safety_car_probability: 0.3
     drs_zones: 2
-
   spa:
-    name: "Spa-Francorchamps"
-    type: "power"
-    downforce: "low"
+    name: Spa-Francorchamps
+    type: power
+    downforce: low
     overtake_difficulty: 0.35
     safety_car_probability: 0.45
     drs_zones: 2
-
   hungaroring:
-    name: "Budapest"
-    type: "high_downforce"
-    downforce: "high"
+    name: Budapest
+    type: high_downforce
+    downforce: high
     overtake_difficulty: 0.75
     safety_car_probability: 0.3
     drs_zones: 2
-
   zandvoort:
-    name: "Zandvoort"
-    type: "high_downforce"
-    downforce: "high"
+    name: Zandvoort
+    type: high_downforce
+    downforce: high
     overtake_difficulty: 0.7
     safety_car_probability: 0.3
     drs_zones: 2
-
   monza:
-    name: "Monza"
-    type: "power"
-    downforce: "low"
+    name: Monza
+    type: power
+    downforce: low
     overtake_difficulty: 0.3
     safety_car_probability: 0.35
     drs_zones: 2
-
   valencia:
-    name: "Valencia"  # Spain R16
-    type: "street"
-    downforce: "medium"
+    name: Valencia
+    type: street
+    downforce: medium
     overtake_difficulty: 0.6
     safety_car_probability: 0.5
     drs_zones: 2
-
   baku:
-    name: "Baku"
-    type: "street"
-    downforce: "low"
+    name: Baku
+    type: street
+    downforce: low
     overtake_difficulty: 0.3
     safety_car_probability: 0.7
     drs_zones: 2
-
   marina_bay:
-    name: "Singapore"
-    type: "street"
-    downforce: "high"
+    name: Singapore
+    type: street
+    downforce: high
     overtake_difficulty: 0.65
     safety_car_probability: 0.75
     drs_zones: 3
-
   cota:
-    name: "Austin"
-    type: "balanced"
-    downforce: "medium"
+    name: Austin
+    type: balanced
+    downforce: medium
     overtake_difficulty: 0.4
     safety_car_probability: 0.35
     drs_zones: 2
-
   mexico_city:
-    name: "Mexico City"
-    type: "balanced"
-    downforce: "medium"
+    name: Mexico City
+    type: balanced
+    downforce: medium
     overtake_difficulty: 0.4
     safety_car_probability: 0.35
     drs_zones: 3
-
   interlagos:
-    name: "Sao Paulo"
-    type: "balanced"
-    downforce: "medium"
+    name: Sao Paulo
+    type: balanced
+    downforce: medium
     overtake_difficulty: 0.35
     safety_car_probability: 0.5
     drs_zones: 2
-
   las_vegas:
-    name: "Las Vegas"
-    type: "street"
-    downforce: "low"
+    name: Las Vegas
+    type: street
+    downforce: low
     overtake_difficulty: 0.4
     safety_car_probability: 0.45
     drs_zones: 2
-
   losail:
-    name: "Lusail"
-    type: "balanced"
-    downforce: "high"
+    name: Lusail
+    type: balanced
+    downforce: high
     overtake_difficulty: 0.4
     safety_car_probability: 0.3
     drs_zones: 2
-
   yas_marina:
-    name: "Abu Dhabi"
-    type: "balanced"
-    downforce: "medium"
+    name: Abu Dhabi
+    type: balanced
+    downforce: medium
     overtake_difficulty: 0.45
     safety_car_probability: 0.35
     drs_zones: 2
-
-
-# --- Team Manual Overrides ---
-# Update these before each race weekend based on your assessment.
-#
-# development_score: 1-5 scale
-#   1 = team has stopped development / declining
-#   2 = below average development pace
-#   3 = average / stable
-#   4 = above average / actively upgrading
-#   5 = rapid development / major upgrade package arriving
-#
-# regulation_adaptation: how well the team has adapted to 2026 regs
-#   "unknown"  = default at season start (widens prediction intervals)
-#   "ahead"    = team clearly understood new regs (tighten intervals upward)
-#   "behind"   = team is struggling (tighten intervals downward)
-#   "volatile" = inconsistent race to race (keep wide intervals)
-#
-# development_trajectory: accelerating / stable / frozen / declining
-#   This is your primary mid-season lever for incorporating real-world
-#   intelligence (e.g., freeze Williams if they stop development,
-#   set McLaren to accelerating when major upgrade arrives).
 teams:
   red_bull:
-    name: "Red Bull Racing"
+    name: Red Bull Racing
     development_score: 4
-    regulation_adaptation: "unknown"
-    development_trajectory: "stable"
+    regulation_adaptation: unknown
+    development_trajectory: stable
   mercedes:
-    name: "Mercedes"
+    name: Mercedes
     development_score: 4
-    regulation_adaptation: "unknown"
-    development_trajectory: "stable"
+    regulation_adaptation: unknown
+    development_trajectory: stable
   mclaren:
-    name: "McLaren"
+    name: McLaren
     development_score: 4
-    regulation_adaptation: "unknown"
-    development_trajectory: "stable"
+    regulation_adaptation: unknown
+    development_trajectory: stable
   ferrari:
-    name: "Ferrari"
+    name: Ferrari
     development_score: 4
-    regulation_adaptation: "unknown"
-    development_trajectory: "stable"
+    regulation_adaptation: unknown
+    development_trajectory: stable
   alpine:
-    name: "Alpine"
+    name: Alpine
     development_score: 3
-    regulation_adaptation: "unknown"
-    development_trajectory: "stable"
+    regulation_adaptation: unknown
+    development_trajectory: stable
   williams:
-    name: "Williams"
+    name: Williams
     development_score: 3
-    regulation_adaptation: "unknown"
-    development_trajectory: "stable"
+    regulation_adaptation: unknown
+    development_trajectory: stable
   aston_martin:
-    name: "Aston Martin"
+    name: Aston Martin
     development_score: 3
-    regulation_adaptation: "unknown"
-    development_trajectory: "stable"
+    regulation_adaptation: unknown
+    development_trajectory: stable
   haas:
-    name: "Haas"
+    name: Haas
     development_score: 2
-    regulation_adaptation: "unknown"
-    development_trajectory: "stable"
+    regulation_adaptation: unknown
+    development_trajectory: stable
   audi:
-    name: "Audi"
+    name: Audi
     development_score: 3
-    regulation_adaptation: "unknown"
-    development_trajectory: "stable"
+    regulation_adaptation: unknown
+    development_trajectory: stable
   racing_bulls:
-    name: "Racing Bulls"
+    name: Racing Bulls
     development_score: 3
-    regulation_adaptation: "unknown"
-    development_trajectory: "stable"
+    regulation_adaptation: unknown
+    development_trajectory: stable
   cadillac:
-    name: "Cadillac"
+    name: Cadillac
     development_score: 2
-    regulation_adaptation: "unknown"
-    development_trajectory: "stable"
-
-
-# --- Model Settings ---
+    regulation_adaptation: unknown
+    development_trajectory: stable
 model:
-  # "lightgbm" or "xgboost" — swap without changing any code
-  engine: "lightgbm"
-
-  # Quantile levels for prediction intervals
-  # 0.1 and 0.9 give an 80% prediction interval
-  quantiles: [0.1, 0.5, 0.9]
-
+  engine: lightgbm
+  quantiles:
+  - 0.1
+  - 0.5
+  - 0.9
   hyperparameters:
     lightgbm:
       n_estimators: 300
@@ -578,7 +656,6 @@ model:
       colsample_bytree: 0.861
       reg_alpha: 0.005
       reg_lambda: 0.655
-
     xgboost:
       n_estimators: 300
       learning_rate: 0.05
@@ -588,86 +665,52 @@ model:
       colsample_bytree: 0.8
       reg_alpha: 0.1
       reg_lambda: 0.1
-
-
-# --- Regulation Uncertainty (2026-specific) ---
-# 2026 introduces completely new technical regulations.
-# These parameters control how much the model trusts historical data
-# vs observed 2026 results.
 regulation:
-  # era_weight: 0.0 = trust only pre-2026 history, 1.0 = trust only 2026 observed
-  # Increase this as the season progresses and the car hierarchy clarifies.
-  # Suggested schedule: R1=0.05, R3=0.18, R5=0.40, R8=0.75, R10=0.89
-  era_weight: 0.65   # Bumped for R7 prep (suggested schedule R7=0.65)
-
-  # uncertainty_multiplier: widens prediction intervals to account for the
-  # genuinely unknown 2026 car hierarchy. Start at 2.0 (double the normal
-  # spread) and reduce toward 1.0 as results clarify (~R8-R10).
+  era_weight: 0.65
   uncertainty_multiplier: 1.6
-
-  # Suggested convergence schedule (for reference — you set era_weight manually):
-  # R1: 0.05, R2: 0.10, R3: 0.18, R4: 0.28, R5: 0.40, R6: 0.53
-  # R7: 0.65, R8: 0.75, R9: 0.83, R10: 0.89, R11+: asymptote toward 1.0
-
-
-# --- Optimizer Settings ---
 optimizer:
-  lookahead_races: 3           # Multi-week planning horizon
-  price_appreciation_weight: 0.4  # Strict split tuning (train 2023-2024, one-shot test 2025)
-  # "conservative" = minimize downside, "moderate" = balanced, "aggressive" = maximize upside
-  risk_tolerance: "moderate"
+  lookahead_races: 3
+  price_appreciation_weight: 0.4
+  risk_tolerance: moderate
   initial_team_kpi:
     enabled: true
-    num_alternatives: 50       # Feasible (<=100M) alternatives sampled for KPI percentile (daily iteration)
+    num_alternatives: 50
     random_seed: 42
-
-
-# --- Current Team State (update after each race) ---
-# Set this to your actual team after each race weekend.
 current_team:
-  drivers: ["RUS", "ALB", "GAS", "HAD", "BEA"]
-  constructors: ["ferrari", "haas"]
-  drs_boost: "RUS"
-  budget: 2.5        # Bank remaining after R3 transfers
-  free_transfers: 2  # Standard weekly allowance
-  banked_transfers: 1  # 1 stored from last round -> 3 available this week
+  drivers:
+  - BEA
+  - GAS
+  - LIN
+  - PER
+  - RUS
+  constructors:
+  - ferrari
+  - haas
+  drs_boost: RUS
+  budget: 7.9
+  free_transfers: 2
+  banked_transfers: 0
   chips_used: []
   chips_remaining:
-    - autopilot
-    - extra_drs_boost
-    - no_negative
-    - wildcard
-    - limitless
-    - final_fix
-
-  # R3 transfer log:
-  # Sold: BOR (6.4M), PER (6.4M)
-  # Bought: BEA (8.6M), GAS (12.8M)
-  # Used 2 of 2 free transfers. No chips played.
-  # R4 priority: monitor SAI (expensive for Williams), consider ANT if budget allows
-
-
-# --- Weather Override (update before each race weekend) ---
-# Set the rain probability based on the weather forecast for the weekend.
-# 0.0 = definitely dry, 1.0 = definitely wet
+  - autopilot
+  - extra_drs_boost
+  - no_negative
+  - wildcard
+  - limitless
+  - final_fix
 weather_override:
-  next_race_round: 3
-  rain_probability: 0.25
-  notes: "JPN R3: Fri dry (3%), Sat qualifying 65% rain (afternoon showers), Sun race 0% dry+clear. Wet qualifying could scramble grid — benefits position-gain scorers if frontrunners slip."
-
-
-# --- Data Source Settings ---
+  next_race_round: 8
+  rain_probability: 0.05
+  notes: ''
+  temperature_c: 24.0
 data:
-  kaggle_dir: "data/raw/kaggle"
-  tracing_insights_dir: "data/raw/tracing_insights"
-  fastf1_cache_dir: "data/cache"
-  openf1_base_url: "https://api.openf1.org/v1"
-  openf1_rate_limit: 3    # requests per second (free tier)
-  historical_start_year: 2018  # How far back to pull training data
-
-
-# --- Backtest Settings ---
+  kaggle_dir: data/raw/kaggle
+  tracing_insights_dir: data/raw/tracing_insights
+  fastf1_cache_dir: data/cache
+  openf1_base_url: https://api.openf1.org/v1
+  openf1_rate_limit: 3
+  historical_start_year: 2018
 backtest:
-  primary_test_year: 2025   # Walk-forward test season
-  regulation_proxy_year: 2022  # Secondary test (2022 = last major reg change)
-  train_start_year: 2018    # Training data start
+  primary_test_year: 2025
+  regulation_proxy_year: 2022
+  train_start_year: 2018
