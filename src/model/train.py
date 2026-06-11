@@ -72,6 +72,27 @@ def _prepare_xy(
     return X, y, final_features
 
 
+def _fit_model(
+    engine: str,
+    hp: dict[str, Any],
+    X: pd.DataFrame,
+    y: pd.Series,
+):
+    if engine == "lightgbm":
+        import lightgbm as lgb
+
+        model = lgb.LGBMRegressor(**hp, verbosity=-1, random_state=42)
+        model.fit(X, y)
+        return model
+    if engine == "xgboost":
+        import xgboost as xgb
+
+        model = xgb.XGBRegressor(**hp, random_state=42)
+        model.fit(X, y)
+        return model
+    raise ValueError(f"Unknown model engine: {engine}")
+
+
 def train_model(
     features_path: str | Path,
     config: dict[str, Any] | None = None,
@@ -153,24 +174,16 @@ def train_model(
     engine = config.get("model", {}).get("engine", "lightgbm")
     hp = config.get("model", {}).get("hyperparameters", {}).get(engine, {})
 
-    if engine == "lightgbm":
-        import lightgbm as lgb
-        model = lgb.LGBMRegressor(**hp, verbosity=-1, random_state=42)
-        model.fit(X_train, y_train)
-    elif engine == "xgboost":
-        import xgboost as xgb
-        model = xgb.XGBRegressor(**hp, random_state=42)
-        model.fit(X_train, y_train)
-    else:
-        raise ValueError(f"Unknown model engine: {engine}")
+    # Eval model (temporal split) for holdout diagnostics.
+    eval_model = _fit_model(engine, hp, X_train, y_train)
 
-    train_pred = model.predict(X_train)
+    train_pred = eval_model.predict(X_train)
     train_mae = float(np.abs(train_pred - y_train).mean())
     train_rmse = float(np.sqrt(((train_pred - y_train) ** 2).mean()))
     train_metrics = {"mae": train_mae, "rmse": train_rmse}
 
     if not test_df.empty and len(y_test) > 0:
-        test_pred = model.predict(X_test)
+        test_pred = eval_model.predict(X_test)
         test_mae = float(np.abs(test_pred - y_test).mean())
         test_rmse = float(np.sqrt(((test_pred - y_test) ** 2).mean()))
         test_metrics = {"mae": test_mae, "rmse": test_rmse}
@@ -178,16 +191,24 @@ def train_model(
     else:
         test_metrics = {}
 
-    # Save model
+    # Refit production model on all data available since train_start_year so the
+    # model keeps learning as the season progresses (while still reporting holdout
+    # diagnostics from the temporal split above).
+    prod_df = df[df["year"] >= train_start_year].copy()
+    X_prod, y_prod, prod_feature_names = _prepare_xy(prod_df, all_feature_cols, CAT_COLS, TARGET)
+    model = _fit_model(engine, hp, X_prod, y_prod)
+
+    # Save production model
     import joblib
+
     model_path = model_dir / "fantasy_model.joblib"
-    joblib.dump({"model": model, "feature_names": feature_names, "engine": engine}, model_path)
+    joblib.dump({"model": model, "feature_names": prod_feature_names, "engine": engine}, model_path)
     log.info("Saved model to %s", model_path)
-    (model_dir / "feature_names.txt").write_text("\n".join(feature_names))
+    (model_dir / "feature_names.txt").write_text("\n".join(prod_feature_names))
 
     return {
         "model": model,
-        "feature_names": feature_names,
+        "feature_names": prod_feature_names,
         "train_metrics": train_metrics,
         "test_metrics": test_metrics,
         "test_year": test_year,

@@ -1,0 +1,4 @@
+position,driver_code,team_id,fastest_lap,dotd,dnf,points,positions_gained,q1_time_ms,q2_time_ms,q3_time_ms
+1,RUS,mercedes,False,False,False,,,74772.0,73026.0,72965.0
+2,ANT,mercedes,False,False,False,,,74010.0,73551.0,73033.0
+16,ALO,aston_martin,False,False,False,,,75760.0,,

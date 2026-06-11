@@ -27,6 +27,150 @@ log = get_logger(__name__)
 Mode = Literal["full", "incremental", "2026_only"]
 
 
+def _apply_manual_results_overrides(base: pd.DataFrame, config: dict[str, Any]) -> pd.DataFrame:
+    """Overlay owner-uploaded weekly results onto current-season rows.
+
+    Source files come from the Streamlit "This Week" uploads:
+      data/fantasy/results/round_NN_{race|qualifying|sprint|sprint_qualifying}.csv
+
+    We use them as overrides/backfills for the active season so retraining can
+    learn from the latest manually entered weekend data before external feeds
+    are fully synced.
+    """
+    if base.empty or not {"year", "round", "session_type", "driver_code"}.issubset(base.columns):
+        return base
+
+    results_dir = Path(config.get("data", {}).get("fantasy_results_dir", "data/fantasy/results"))
+    if not results_dir.exists():
+        return base
+
+    season_year = int(config.get("season", {}).get("year", 2026))
+    out = base.copy()
+
+    def _overlay_session(round_number: int, session_type: str, manual: pd.DataFrame) -> None:
+        nonlocal out
+        if manual.empty:
+            return
+        if "driver_code" not in manual.columns:
+            return
+        m = manual.copy()
+        m["driver_code"] = m["driver_code"].astype(str).str.upper().str.strip()
+        m = m[m["driver_code"].str.len() > 0]
+        if m.empty:
+            return
+        if "team_id" in m.columns and "constructor_id" not in m.columns:
+            m["constructor_id"] = m["team_id"].astype(str).str.strip()
+
+        mask = (
+            (out["year"].astype(int) == int(season_year))
+            & (out["round"].astype(int) == int(round_number))
+            & (out["session_type"].astype(str) == session_type)
+        )
+        if not mask.any():
+            log.info(
+                "Manual override skipped: no base rows for Y%s R%s %s",
+                season_year,
+                round_number,
+                session_type,
+            )
+            return
+
+        slice_df = out.loc[mask, :].copy()
+        slice_df["_idx"] = slice_df.index
+        merged = slice_df[["_idx", "driver_code"]].merge(
+            m,
+            on="driver_code",
+            how="left",
+            suffixes=("", "_manual"),
+        )
+
+        override_cols = {
+            "position": "finish_position",
+            "constructor_id": "constructor_id",
+            "team_id": "constructor_id",
+            "points": "points_official",
+            "positions_gained": "positions_gained",
+            "q1_time_ms": "q1_time_ms",
+            "q2_time_ms": "q2_time_ms",
+            "q3_time_ms": "q3_time_ms",
+        }
+
+        for src_col, dst_col in override_cols.items():
+            if src_col not in merged.columns:
+                continue
+            vals = pd.to_numeric(merged[src_col], errors="coerce") if src_col in {
+                "position",
+                "points",
+                "positions_gained",
+                "q1_time_ms",
+                "q2_time_ms",
+                "q3_time_ms",
+            } else merged[src_col]
+            present = vals.notna()
+            if present.any():
+                idxs = merged.loc[present, "_idx"]
+                out.loc[idxs, dst_col] = vals.loc[present].values
+
+        # DNF flag -> status update for race/sprint/qualifying scoring.
+        if "dnf" in merged.columns:
+            dnf_bool = merged["dnf"].fillna(False).astype(bool)
+            present = merged["dnf"].notna()
+            if present.any():
+                idxs = merged.loc[present, "_idx"]
+                status_vals = pd.Series(["DNF" if x else "Finished" for x in dnf_bool.loc[present]], index=idxs)
+                out.loc[status_vals.index, "status"] = status_vals.values
+
+    for p in sorted(results_dir.glob("round_*_race.csv")):
+        try:
+            rnd = int(p.stem.split("_")[1])
+        except (IndexError, ValueError):
+            continue
+        _overlay_session(rnd, "race", pd.read_csv(p))
+
+    for p in sorted(results_dir.glob("round_*_qualifying.csv")):
+        try:
+            rnd = int(p.stem.split("_")[1])
+        except (IndexError, ValueError):
+            continue
+        _overlay_session(rnd, "qualifying", pd.read_csv(p))
+
+    for p in sorted(results_dir.glob("round_*_sprint.csv")):
+        try:
+            rnd = int(p.stem.split("_")[1])
+        except (IndexError, ValueError):
+            continue
+        _overlay_session(rnd, "sprint", pd.read_csv(p))
+
+    # Sprint qualifying uploads define sprint grid order. Apply as sprint grid_position.
+    for p in sorted(results_dir.glob("round_*_sprint_qualifying.csv")):
+        try:
+            rnd = int(p.stem.split("_")[1])
+        except (IndexError, ValueError):
+            continue
+        m = pd.read_csv(p)
+        if m.empty or "driver_code" not in m.columns or "position" not in m.columns:
+            continue
+        m = m.copy()
+        m["driver_code"] = m["driver_code"].astype(str).str.upper().str.strip()
+        m["position"] = pd.to_numeric(m["position"], errors="coerce")
+        m = m[m["driver_code"].str.len() > 0]
+        mask = (
+            (out["year"].astype(int) == int(season_year))
+            & (out["round"].astype(int) == int(rnd))
+            & (out["session_type"].astype(str) == "sprint")
+        )
+        if not mask.any():
+            continue
+        sl = out.loc[mask, :].copy()
+        sl["_idx"] = sl.index
+        merged = sl[["_idx", "driver_code"]].merge(m[["driver_code", "position"]], on="driver_code", how="left")
+        present = merged["position"].notna()
+        if present.any():
+            out.loc[merged.loc[present, "_idx"], "grid_position"] = merged.loc[present, "position"].values
+
+    return out
+
+
 def run_pipeline(
     config_path: str | Path | None = None,
     output_path: str | Path | None = None,
@@ -169,6 +313,10 @@ def run_pipeline(
     if openf1_years:
         log.info("Running OpenF1 enrichment for years %s", openf1_years)
         base = enrich_sessions_batch(base, config=config, cache_dir=openf1_cache, years=openf1_years)
+
+    # 4b. Overlay manually uploaded weekly results (current season) from the UI.
+    # This ensures retrains can consume latest owner-entered race/quali/sprint data.
+    base = _apply_manual_results_overrides(base, config)
 
     # 5. Compute fantasy points
     base = compute_fantasy_points(config, base)

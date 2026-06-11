@@ -34,13 +34,10 @@ from src.ui_services import (
     history_path,
     ingest_constructor_prices,
     ingest_driver_prices,
-    ingest_qualifying_results,
-    ingest_race_results,
     is_cancelled,
     load_config_file,
     next_active_round,
     parse_weather_description,
-    previous_active_round,
     propose_files_pr,
     recommend_round,
     recommend_transfers,
@@ -167,9 +164,9 @@ with wc:
 # 2. Latest data (CSV uploads)
 # ---------------------------------------------------------------------------
 st.header("2. Latest data")
-st.caption("Drop in this week's CSVs. Each tab is independent — upload only what's new.")
+st.caption("Update prices + transfer allowance for this week. Round scoring/session result uploads live on the Score Round page.")
 
-tabs = st.tabs(["Prices (drivers + constructors)", "Last race results", "Last qualifying"])
+tabs = st.tabs(["Prices (drivers + constructors)"])
 
 
 def _csv_input(label: str, key: str, placeholder: str) -> str:
@@ -209,15 +206,12 @@ _QUALI_EXAMPLE = (
 
 
 # Derived from the single round selector in section 1: prices apply ahead
-# of `round_number`; race + qualifying results are from the previous active
-# round (skipping any cancelled rounds in between).
+# of `round_number`.
 prices_round = int(round_number)
-results_round = previous_active_round(calendar, int(round_number))
 
 st.caption(
     f"Prices apply ahead of **{format_round_label(calendar, prices_round, short=True)}**. "
-    f"Race + qualifying results are from **{format_round_label(calendar, results_round, short=True)}**. "
-    "(Change the round at the top of the page if you're backfilling a different week.)"
+    "Use the Score Round page to upload race/qualifying/sprint session results."
 )
 
 
@@ -296,21 +290,6 @@ with tabs[1]:
         else:
             for e in res.errors:
                 st.error(e)
-
-with tabs[2]:
-    text = _csv_input("qualifying results", "quali_res", _QUALI_EXAMPLE)
-    if st.button("Save qualifying results", key="save_quali"):
-        res = ingest_qualifying_results(text, PROJECT_ROOT, results_round, cfg=get_working_config())
-        if res.ok:
-            st.success(f"Saved {res.rows} drivers' qualifying results for R{results_round} → {res.saved_path}")
-            for w in res.warnings:
-                st.warning(w)
-            if res.parsed is not None and not res.parsed.empty:
-                st.dataframe(res.parsed.head(10), use_container_width=True)
-        else:
-            for e in res.errors:
-                st.error(e)
-
 
 # ---------------------------------------------------------------------------
 # 3. Refresh model (optional but recommended after each race)
@@ -806,5 +785,9 @@ else:
         )
         if scored:
             st.markdown("##### Last round's actual points")
+            sessions = ", ".join(sorted(scored.get("session_results_paths", {}).keys()))
+            if sessions:
+                st.caption(f"Included sessions: {sessions}")
+            st.caption("DRS is not re-applied here (avoids double counting vs official scored totals).")
             st.metric("Total driver points scored", f"{scored['total_driver_points']:.1f}")
             st.dataframe(pd.DataFrame(scored["drivers"]), use_container_width=True, hide_index=True)

@@ -93,6 +93,16 @@ def _cancelled_overlays(
 def cumulative_chart(cum_df: pd.DataFrame, calendar: dict[Any, Any]) -> alt.Chart:
     df = _add_race_label(cum_df, calendar)
     label_expr = _x_axis_labels_js(calendar)
+    tooltips = [
+        alt.Tooltip("race_label:N", title="Race"),
+        alt.Tooltip("team_name:N", title="Team"),
+        alt.Tooltip("cumulative_points:Q", title="Cumulative", format=".0f"),
+        alt.Tooltip("round_points:Q", title="This round", format=".0f"),
+    ]
+    if "chip" in df.columns:
+        tooltips.append(alt.Tooltip("chip:N", title="Chip used"))
+    if "chip_details" in df.columns:
+        tooltips.append(alt.Tooltip("chip_details:N", title="Chip details"))
 
     lines = (
         alt.Chart(df)
@@ -110,14 +120,18 @@ def cumulative_chart(cum_df: pd.DataFrame, calendar: dict[Any, Any]) -> alt.Char
                 "team_name:N", scale=_color_scale(),
                 legend=alt.Legend(title=None, orient="top"),
             ),
-            tooltip=[
-                alt.Tooltip("race_label:N", title="Race"),
-                alt.Tooltip("team_name:N", title="Team"),
-                alt.Tooltip("cumulative_points:Q", title="Cumulative", format=".0f"),
-                alt.Tooltip("round_points:Q", title="This round", format=".0f"),
-            ],
+            tooltip=tooltips,
         )
     )
+    if "chip_used" in df.columns:
+        chip_pts = df[df["chip_used"]].copy()
+        if not chip_pts.empty:
+            star = (
+                alt.Chart(chip_pts)
+                .mark_text(text="★", dy=-12, fontSize=15, color="#FFD166")
+                .encode(x="round:Q", y="cumulative_points:Q")
+            )
+            lines = lines + star
     overlays = _cancelled_overlays(calendar, y_max=float(df["cumulative_points"].max()))
     chart = lines
     if overlays:
@@ -132,8 +146,17 @@ def per_round_chart(
 ) -> alt.Chart:
     df = _add_race_label(cum_df, calendar)
     label_expr = _x_axis_labels_js(calendar, sprint_rounds=sprint_rounds or set())
+    tooltips = [
+        alt.Tooltip("race_label:N", title="Race"),
+        alt.Tooltip("team_name:N", title="Team"),
+        alt.Tooltip("round_points:Q", title="Points", format=".0f"),
+    ]
+    if "chip" in df.columns:
+        tooltips.append(alt.Tooltip("chip:N", title="Chip used"))
+    if "chip_details" in df.columns:
+        tooltips.append(alt.Tooltip("chip_details:N", title="Chip details"))
 
-    return (
+    bars = (
         alt.Chart(df)
         .mark_bar()
         .encode(
@@ -148,19 +171,29 @@ def per_round_chart(
                 "team_name:N", scale=_color_scale(),
                 legend=alt.Legend(title=None, orient="top"),
             ),
-            tooltip=[
-                alt.Tooltip("race_label:N", title="Race"),
-                alt.Tooltip("team_name:N", title="Team"),
-                alt.Tooltip("round_points:Q", title="Points", format=".0f"),
-            ],
+            tooltip=tooltips,
         )
         .properties(height=380)
     )
+    if "chip_used" in df.columns:
+        chip_pts = df[df["chip_used"]].copy()
+        if not chip_pts.empty:
+            stars = (
+                alt.Chart(chip_pts)
+                .mark_text(text="★", dy=-10, fontSize=14, color="#FFD166")
+                .encode(
+                    x=alt.X("round:O", sort=alt.EncodingSortField("round")),
+                    xOffset=alt.XOffset("team_name:N"),
+                    y=alt.Y("round_points:Q"),
+                )
+            )
+            return bars + stars
+    return bars
 
 
 def delta_vs_human_chart(cum_df: pd.DataFrame, calendar: dict[Any, Any]) -> alt.Chart | None:
-    """Cumulative gap to the human team, per round. Returns None if human has no data."""
-    human = cum_df[cum_df["team_key"] == "human"].set_index("round")["cumulative_points"]
+    """Round-by-round points gap to the human team. Returns None if human has no data."""
+    human = cum_df[cum_df["team_key"] == "human"].set_index("round")["round_points"]
     if human.empty:
         return None
 
@@ -168,51 +201,57 @@ def delta_vs_human_chart(cum_df: pd.DataFrame, calendar: dict[Any, Any]) -> alt.
     if df.empty:
         return None
 
-    df["delta_vs_human"] = df.apply(
-        lambda r: float(r["cumulative_points"]) - float(human.get(int(r["round"]), 0)),
-        axis=1,
-    )
+    df["delta_vs_human"] = df.apply(lambda r: float(r["round_points"]) - float(human.get(int(r["round"]), 0)), axis=1)
     df = _add_race_label(df, calendar)
     label_expr = _x_axis_labels_js(calendar)
+    tooltips = [
+        alt.Tooltip("race_label:N", title="Race"),
+        alt.Tooltip("team_name:N", title="Team"),
+        alt.Tooltip("delta_vs_human:Q", title="Vs human (this round)", format="+.0f"),
+        alt.Tooltip("round_points:Q", title="Team round points", format=".0f"),
+    ]
+    if "chip" in df.columns:
+        tooltips.append(alt.Tooltip("chip:N", title="Chip used"))
+    if "chip_details" in df.columns:
+        tooltips.append(alt.Tooltip("chip_details:N", title="Chip details"))
 
     rule_zero = (
         alt.Chart(pd.DataFrame({"zero": [0]}))
         .mark_rule(color="#888", strokeDash=[5, 5])
         .encode(y="zero:Q")
     )
-    baseline_label = (
-        alt.Chart(pd.DataFrame({"x": [float(cum_df["round"].max())], "y": [0], "label": ["human baseline"]}))
-        .mark_text(align="right", baseline="bottom", color="#888", fontSize=11, dx=-4, dy=-4)
-        .encode(x="x:Q", y="y:Q", text="label:N")
-    )
-    lines = (
+    bars = (
         alt.Chart(df)
-        .mark_line(point=alt.OverlayMarkDef(size=80, filled=True), strokeWidth=3)
+        .mark_bar()
         .encode(
             x=alt.X(
-                "round:Q", title="Round",
-                axis=alt.Axis(
-                    labelExpr=label_expr, labelAngle=-30, tickMinStep=1,
-                    values=calendar_rounds(calendar, include_cancelled=True),
-                ),
+                "round:O", title="Round",
+                sort=alt.EncodingSortField("round"),
+                axis=alt.Axis(labelExpr=label_expr, labelAngle=-30),
             ),
-            y=alt.Y("delta_vs_human:Q", title="Points behind / ahead of human"),
+            xOffset=alt.XOffset("team_name:N"),
+            y=alt.Y("delta_vs_human:Q", title="Points vs human (this round)"),
             color=alt.Color(
                 "team_name:N", scale=_color_scale(),
                 legend=alt.Legend(title=None, orient="top"),
             ),
-            tooltip=[
-                alt.Tooltip("race_label:N", title="Race"),
-                alt.Tooltip("team_name:N", title="Team"),
-                alt.Tooltip("delta_vs_human:Q", title="Vs human", format="+.0f"),
-                alt.Tooltip("cumulative_points:Q", title="Cumulative", format=".0f"),
-            ],
+            tooltip=tooltips,
         )
     )
-    overlays = _cancelled_overlays(calendar, y_max=float(df["delta_vs_human"].max()))
-    chart = rule_zero + baseline_label + lines
-    if overlays:
-        chart = chart + overlays[0] + overlays[1]
+    chart = rule_zero + bars
+    if "chip_used" in df.columns:
+        chip_pts = df[df["chip_used"]].copy()
+        if not chip_pts.empty:
+            stars = (
+                alt.Chart(chip_pts)
+                .mark_text(text="★", dy=-10, fontSize=14, color="#FFD166")
+                .encode(
+                    x=alt.X("round:O", sort=alt.EncodingSortField("round")),
+                    xOffset=alt.XOffset("team_name:N"),
+                    y=alt.Y("delta_vs_human:Q"),
+                )
+            )
+            chart = chart + stars
     return chart.properties(height=380)
 
 

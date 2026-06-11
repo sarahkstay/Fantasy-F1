@@ -109,16 +109,72 @@ def load_competitor_history(project_root: str | Path) -> pd.DataFrame:
 
 
 def load_chip_usage(project_root: str | Path) -> pd.DataFrame:
-    """Long-form chip usage log: round, team_key, chip, details."""
+    """Long-form team metadata log: round, team_key, chip, details, drs_boost."""
     p = chips_path(project_root)
     if not p.exists():
-        return pd.DataFrame(columns=["round", "team_key", "team_name", "chip", "details"])
+        return pd.DataFrame(columns=["round", "team_key", "team_name", "chip", "details", "drs_boost"])
     df = pd.read_csv(p)
     if "team_name" not in df.columns and "team_key" in df.columns:
         df["team_name"] = df["team_key"].map(THREE_TEAM_LABELS).fillna(df["team_key"])
     if "details" not in df.columns:
         df["details"] = ""
+    if "drs_boost" not in df.columns:
+        df["drs_boost"] = ""
     return df
+
+
+def append_chip_usage(
+    project_root: str | Path,
+    round_number: int,
+    team_key: str,
+    chip: str | None,
+    details: str = "",
+    drs_boost: str | None = None,
+    team_name: str | None = None,
+) -> Path:
+    """Insert/replace metadata for (round, team_key); clears row if chip+drs are empty."""
+    p = chips_path(project_root)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    if p.exists():
+        df = pd.read_csv(p)
+    else:
+        df = pd.DataFrame(columns=["round", "team_key", "team_name", "chip", "details", "drs_boost"])
+    if "drs_boost" not in df.columns:
+        df["drs_boost"] = ""
+
+    if not df.empty:
+        mask = (df["round"].astype(int) == int(round_number)) & (df["team_key"].astype(str) == str(team_key))
+        df = df[~mask]
+
+    chip_clean = str(chip or "").strip()
+    drs_clean = str(drs_boost or "").strip().upper()
+    has_chip = bool(chip_clean and chip_clean.lower() != "none")
+    has_drs = bool(drs_clean)
+    if has_chip or has_drs:
+        name = team_name or THREE_TEAM_LABELS.get(team_key, team_key)
+        df = pd.concat(
+            [
+                df,
+                pd.DataFrame(
+                    [
+                        {
+                            "round": int(round_number),
+                            "team_key": str(team_key),
+                            "team_name": str(name),
+                            "chip": chip_clean if has_chip else "",
+                            "details": str(details or ""),
+                            "drs_boost": drs_clean,
+                        }
+                    ]
+                ),
+            ],
+            ignore_index=True,
+        )
+
+    if not df.empty:
+        df = df.sort_values(["round", "team_key"]).reset_index(drop=True)
+    df.to_csv(p, index=False)
+    return p
 
 
 def latest_round_in_history(project_root: str | Path) -> int | None:
@@ -137,7 +193,8 @@ def cumulative_points_by_team(project_root: str | Path) -> pd.DataFrame:
     (Altair would sum them as stacked bars).
     """
     rows: list[dict[str, Any]] = []
-    model_rounds_from_history: set[int] = set()
+    rounds_from_history_by_team: dict[str, set[int]] = {}
+    last_cumulative_by_team: dict[str, float] = {}
 
     hist = load_history(project_root)
     if not hist.empty and "actual_points" in hist.columns:
@@ -153,25 +210,35 @@ def cumulative_points_by_team(project_root: str | Path) -> pd.DataFrame:
                 "cumulative_points": float(r["cumulative_points"]),
                 "round_points": float(r["actual_points"]),
             })
-            model_rounds_from_history.add(int(r["round"]))
+            rounds_from_history_by_team.setdefault("model", set()).add(int(r["round"]))
+            last_cumulative_by_team["model"] = float(r["cumulative_points"])
 
     comp = load_competitor_history(project_root)
     if not comp.empty:
         comp["points"] = pd.to_numeric(comp["points"], errors="coerce").fillna(0.0)
-        # Drop any model rows that history.csv has already covered
-        if model_rounds_from_history:
-            mask = (comp["team_key"] == "model") & (comp["round"].astype(int).isin(model_rounds_from_history))
+        # Drop overlaps for any team already represented in history.
+        for tk, rounds_seen in rounds_from_history_by_team.items():
+            if not rounds_seen:
+                continue
+            mask = (comp["team_key"] == tk) & (comp["round"].astype(int).isin(rounds_seen))
             comp = comp[~mask]
+
         comp = comp.sort_values(["team_key", "round"])
-        comp["cumulative_points"] = comp.groupby("team_key")["points"].cumsum()
-        for _, r in comp.iterrows():
-            rows.append({
-                "round": int(r["round"]),
-                "team_key": str(r["team_key"]),
-                "team_name": str(r["team_name"]),
-                "cumulative_points": float(r["cumulative_points"]),
-                "round_points": float(r["points"]),
-            })
+        for team_key, grp in comp.groupby("team_key", sort=False):
+            base = float(last_cumulative_by_team.get(str(team_key), 0.0))
+            running = base
+            for _, r in grp.iterrows():
+                running += float(r["points"])
+                rows.append(
+                    {
+                        "round": int(r["round"]),
+                        "team_key": str(r["team_key"]),
+                        "team_name": str(r["team_name"]),
+                        "cumulative_points": float(running),
+                        "round_points": float(r["points"]),
+                    }
+                )
+            last_cumulative_by_team[str(team_key)] = float(running)
 
     return pd.DataFrame(rows)
 

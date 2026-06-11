@@ -20,6 +20,7 @@ from frontend.components import (
 )
 from frontend.state import get_working_config, require_auth
 from src.ui_services import (
+    build_competitive_diagnostics,
     calendar_rounds,
     cumulative_points_by_team,
     current_leaderboard,
@@ -66,12 +67,83 @@ else:
     display = display[["rank", "Team", "Points"]].rename(columns={"rank": "Rank"})
     st.dataframe(display, use_container_width=True, hide_index=True)
 
+# ---------------------------------------------------------------------------
+# Competitive diagnostics layer
+# ---------------------------------------------------------------------------
+diag = build_competitive_diagnostics(
+    PROJECT_ROOT,
+    calendar=calendar,
+    sprint_rounds=set(cfg.get("season", {}).get("sprint_rounds", []) or []),
+)
+st.header("Competitive diagnostics")
+latest = diag.get("latest", {}) or {}
+if latest:
+    d1, d2 = st.columns(2)
+    with d1:
+        st.metric("Cumulative gap vs human", f"{float(latest.get('cum_gap_vs_human', 0.0)):+.0f}")
+    with d2:
+        st.metric("Cumulative gap vs Claude", f"{float(latest.get('cum_gap_vs_claude', 0.0)):+.0f}")
+for h in diag.get("highlights", []):
+    st.caption(f"- {h}")
+diag_df = diag.get("round_diagnostics")
+if isinstance(diag_df, pd.DataFrame) and not diag_df.empty:
+    show = diag_df.copy().sort_values("round", ascending=False)
+    rename = {
+        "race": "Race",
+        "model_points": "Model",
+        "human_points": "Human",
+        "claude_points": "Claude",
+        "delta_vs_human": "Model vs Human",
+        "delta_vs_claude": "Model vs Claude",
+        "model_chip": "Model chip",
+        "human_chip": "Human chip",
+        "claude_chip": "Claude chip",
+        "model_drs": "Model DRS",
+        "human_drs": "Human DRS",
+        "claude_drs": "Claude DRS",
+        "sprint_round": "Sprint?",
+        "diagnosis": "Likely cause",
+    }
+    keep = [
+        "race",
+        "model_points",
+        "human_points",
+        "claude_points",
+        "delta_vs_human",
+        "delta_vs_claude",
+        "model_chip",
+        "human_chip",
+        "claude_chip",
+        "model_drs",
+        "human_drs",
+        "claude_drs",
+        "sprint_round",
+        "diagnosis",
+    ]
+    show = show[keep].rename(columns=rename)
+    st.dataframe(show, use_container_width=True, hide_index=True)
+else:
+    st.caption("Diagnostics will populate once all three teams have scored rounds.")
+
 
 # ---------------------------------------------------------------------------
 # Per-round / gap-to-human / cumulative charts
 # ---------------------------------------------------------------------------
 st.header("Points over time")
 cum = _drop_cancelled(cumulative_points_by_team(PROJECT_ROOT))
+chips = _drop_cancelled(load_chip_usage(PROJECT_ROOT))
+if not cum.empty:
+    if not chips.empty:
+        chip_cols = chips[["round", "team_key", "chip", "details"]].copy().rename(
+            columns={"details": "chip_details"}
+        )
+        cum = cum.merge(chip_cols, on=["round", "team_key"], how="left")
+    else:
+        cum["chip"] = ""
+        cum["chip_details"] = ""
+    cum["chip"] = cum["chip"].fillna("").astype(str)
+    cum["chip_details"] = cum["chip_details"].fillna("").astype(str)
+    cum["chip_used"] = cum["chip"].str.strip() != ""
 sprint_rounds = set(cfg.get("season", {}).get("sprint_rounds", []) or [])
 if cum.empty:
     st.info("Charts populate after the first round is scored.")
@@ -87,8 +159,8 @@ else:
         else:
             st.altair_chart(delta, use_container_width=True)
             st.caption(
-                "Each line shows the cumulative gap to the human team. Negative = behind; positive = ahead. "
-                "The dashed line is the human baseline. ✗ on the axis = cancelled round."
+                "Round-by-round points gap versus the human team. Negative = behind that round; positive = ahead. "
+                "The dashed line is the 0 baseline."
             )
     with tab_cum:
         st.altair_chart(cumulative_chart(cum, calendar), use_container_width=True)
@@ -99,7 +171,6 @@ else:
 # ---------------------------------------------------------------------------
 st.markdown("---")
 st.header("Chip usage timeline")
-chips = _drop_cancelled(load_chip_usage(PROJECT_ROOT))
 if chips.empty:
     st.caption("No chips recorded yet.")
 else:

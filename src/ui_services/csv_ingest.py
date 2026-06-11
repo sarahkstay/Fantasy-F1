@@ -164,6 +164,32 @@ _DOTD_COLS = ["dotd", "driver_of_the_day", "driver_of_day"]
 _DNF_COLS = ["dnf", "retired", "out", "status", "time / retired", "time/retired", "time"]
 _GAIN_COLS = ["positions_gained", "gained", "delta", "places_gained"]
 _DNF_TOKENS = {"dnf", "retired", "ret", "dsq", "nc", "dq", "dns", "dnq"}
+_Q1_COLS = ["q1", "sq1"]
+_Q2_COLS = ["q2", "sq2"]
+_Q3_COLS = ["q3", "sq3"]
+
+
+def _time_to_ms(v: Any) -> float | None:
+    """Parse lap time strings like 1:12.965 or 72.965 to milliseconds."""
+    if v is None or (isinstance(v, float) and pd.isna(v)):
+        return None
+    s = str(v).strip()
+    if not s:
+        return None
+    if ":" in s:
+        parts = s.split(":")
+        if len(parts) == 2:
+            mins, secs = parts
+            try:
+                return float(mins) * 60000.0 + float(secs) * 1000.0
+            except ValueError:
+                return None
+    else:
+        try:
+            return float(s) * 1000.0
+        except ValueError:
+            return None
+    return None
 
 
 def _build_driver_name_lookup(cfg: dict[str, Any]) -> dict[str, str]:
@@ -378,6 +404,15 @@ def _normalize_results_df(
     gain = _find_col(df, _GAIN_COLS)
     out["positions_gained"] = pd.to_numeric(df[gain], errors="coerce") if gain else pd.NA
 
+    # Preserve qualifying timing columns when present (Q1/Q2/Q3 or SQ1/SQ2/SQ3).
+    if kind in {"qualifying", "sprint qualifying"}:
+        q1 = _find_col(df, _Q1_COLS)
+        q2 = _find_col(df, _Q2_COLS)
+        q3 = _find_col(df, _Q3_COLS)
+        out["q1_time_ms"] = df[q1].apply(_time_to_ms) if q1 else pd.NA
+        out["q2_time_ms"] = df[q2].apply(_time_to_ms) if q2 else pd.NA
+        out["q3_time_ms"] = df[q3].apply(_time_to_ms) if q3 else pd.NA
+
     out = out[out["driver_code"].astype(str).str.len() > 0]
     return out, warnings
 
@@ -443,6 +478,40 @@ def ingest_qualifying_results(
     return IngestResult(ok=True, rows=len(cleaned), saved_path=str(saved), warnings=warnings, parsed=cleaned)
 
 
+def ingest_sprint_results(
+    csv_text: str,
+    project_root: str | Path,
+    round_number: int,
+    cfg: dict[str, Any] | None = None,
+) -> IngestResult:
+    df = _parse_csv_text(csv_text)
+    if df is None or df.empty:
+        return IngestResult(ok=False, errors=["Sprint results CSV is empty"])
+    try:
+        cleaned, warnings = _normalize_results_df(df, "sprint", cfg=cfg)
+    except ValueError as e:
+        return IngestResult(ok=False, errors=[str(e)])
+    saved = _save_results_csv(cleaned, Path(project_root), round_number, "sprint")
+    return IngestResult(ok=True, rows=len(cleaned), saved_path=str(saved), warnings=warnings, parsed=cleaned)
+
+
+def ingest_sprint_qualifying_results(
+    csv_text: str,
+    project_root: str | Path,
+    round_number: int,
+    cfg: dict[str, Any] | None = None,
+) -> IngestResult:
+    df = _parse_csv_text(csv_text)
+    if df is None or df.empty:
+        return IngestResult(ok=False, errors=["Sprint qualifying results CSV is empty"])
+    try:
+        cleaned, warnings = _normalize_results_df(df, "sprint qualifying", cfg=cfg)
+    except ValueError as e:
+        return IngestResult(ok=False, errors=[str(e)])
+    saved = _save_results_csv(cleaned, Path(project_root), round_number, "sprint_qualifying")
+    return IngestResult(ok=True, rows=len(cleaned), saved_path=str(saved), warnings=warnings, parsed=cleaned)
+
+
 # ---------------------------------------------------------------------------
 # Per-team-points helper (computes what the user's locked-in team scored)
 # ---------------------------------------------------------------------------
@@ -455,33 +524,72 @@ def compute_team_points_for_round(
     constructors: list[str],
     drs_boost: str | None,
 ) -> dict[str, Any]:
-    """Compute fantasy-style points for the user's team for a given round.
+    """Compute team driver points for a given round from saved session CSVs.
 
-    Uses the saved race results CSV. Returns a breakdown per driver + total.
-    Returns {} if the race results file does not exist.
+    Includes any available session files for the round:
+      - race
+      - sprint
+      - qualifying
+      - sprint_qualifying
+
+    The helper sums per-driver points across those sessions exactly as stored in
+    the ingested files. It does NOT apply extra DRS doubling, because Score Round
+    totals are already entered from the official game output.
+    Returns {} if no session file exists for that round.
     """
     root = Path(project_root)
-    race_path = root / "data" / "fantasy" / "results" / f"round_{int(round_number):02d}_race.csv"
-    if not race_path.exists():
+    results_dir = root / "data" / "fantasy" / "results"
+    session_files: list[tuple[str, Path]] = [
+        ("race", results_dir / f"round_{int(round_number):02d}_race.csv"),
+        ("sprint", results_dir / f"round_{int(round_number):02d}_sprint.csv"),
+        ("qualifying", results_dir / f"round_{int(round_number):02d}_qualifying.csv"),
+        ("sprint_qualifying", results_dir / f"round_{int(round_number):02d}_sprint_qualifying.csv"),
+    ]
+    existing = [(name, p) for name, p in session_files if p.exists()]
+    if not existing:
         return {}
-    race = pd.read_csv(race_path)
+
+    session_points: dict[str, dict[str, float]] = {}
+    for name, p in existing:
+        df = pd.read_csv(p)
+        if "driver_code" not in df.columns:
+            continue
+        pts_col = "points" if "points" in df.columns else None
+        if pts_col is None:
+            continue
+        parsed = df[["driver_code", pts_col]].copy()
+        parsed["driver_code"] = parsed["driver_code"].astype(str).str.upper().str.strip()
+        parsed["points"] = pd.to_numeric(parsed[pts_col], errors="coerce").fillna(0.0)
+        parsed = parsed[parsed["driver_code"].str.len() > 0]
+        by_driver = parsed.groupby("driver_code", as_index=True)["points"].sum().to_dict()
+        session_points[name] = {str(k): float(v) for k, v in by_driver.items()}
+
     rows = []
     total = 0.0
     drs = (drs_boost or "").upper()
     for code in [str(d).upper() for d in drivers]:
-        match = race[race["driver_code"] == code]
-        if match.empty:
-            rows.append({"driver": code, "points": None, "drs_doubled": code == drs})
-            continue
-        pts = float(match.iloc[0].get("points") or 0.0)
-        if code == drs:
-            pts *= 2.0
+        race_pts = float(session_points.get("race", {}).get(code, 0.0))
+        sprint_pts = float(session_points.get("sprint", {}).get(code, 0.0))
+        quali_pts = float(session_points.get("qualifying", {}).get(code, 0.0))
+        sprint_quali_pts = float(session_points.get("sprint_qualifying", {}).get(code, 0.0))
+        weekend_base = race_pts + sprint_pts + quali_pts + sprint_quali_pts
+        pts = weekend_base
         total += pts
-        rows.append({"driver": code, "points": pts, "drs_doubled": code == drs})
+        rows.append({
+            "driver": code,
+            "race_points": race_pts,
+            "sprint_points": sprint_pts,
+            "qualifying_points": quali_pts,
+            "sprint_qualifying_points": sprint_quali_pts,
+            "weekend_points_before_drs": weekend_base,
+            "points": pts,
+            "drs_doubled": False,
+            "drs_selected_driver": code == drs,
+        })
     return {
         "round": int(round_number),
         "drivers": rows,
         "constructors": [str(c).lower() for c in constructors],
         "total_driver_points": total,
-        "race_results_path": str(race_path),
+        "session_results_paths": {name: str(p) for name, p in existing},
     }

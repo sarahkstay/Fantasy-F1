@@ -1,4 +1,4 @@
-from src.ui_services.analytics_service import collect_health_checks, load_analytics_bundle
+from src.ui_services.analytics_service import build_competitive_diagnostics, collect_health_checks, load_analytics_bundle
 from src.ui_services.calendar_service import (
     calendar_rounds,
     format_round_label,
@@ -23,6 +23,8 @@ from src.ui_services.csv_ingest import (
     ingest_driver_prices,
     ingest_qualifying_results,
     ingest_race_results,
+    ingest_sprint_qualifying_results,
+    ingest_sprint_results,
     parse_score_breakdown,
     save_price_snapshot,
 )
@@ -39,6 +41,7 @@ from src.ui_services.recommendation_service import recommend_round, recommend_tr
 from src.ui_services.season_service import (
     THREE_TEAM_LABELS,
     append_breakdown,
+    append_chip_usage,
     append_competitor_score,
     chips_path,
     cumulative_points_by_team,
@@ -71,12 +74,15 @@ __all__ = [
     "recommend_transfers",
     "collect_health_checks",
     "load_analytics_bundle",
+    "build_competitive_diagnostics",
     "propose_config_change_via_pr",
     "propose_files_pr",
     "ingest_driver_prices",
     "ingest_constructor_prices",
     "ingest_race_results",
     "ingest_qualifying_results",
+    "ingest_sprint_results",
+    "ingest_sprint_qualifying_results",
     "save_price_snapshot",
     "parse_score_breakdown",
     "BreakdownRow",
@@ -92,6 +98,7 @@ __all__ = [
     "f_to_c",
     "THREE_TEAM_LABELS",
     "append_breakdown",
+    "append_chip_usage",
     "append_competitor_score",
     "chips_path",
     "cumulative_points_by_team",
