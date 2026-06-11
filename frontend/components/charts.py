@@ -255,6 +255,77 @@ def delta_vs_human_chart(cum_df: pd.DataFrame, calendar: dict[Any, Any]) -> alt.
     return chart.properties(height=380)
 
 
+def delta_vs_human_cumulative_chart(cum_df: pd.DataFrame, calendar: dict[Any, Any]) -> alt.Chart | None:
+    """Cumulative points gap to the human team. Returns None if human has no data."""
+    human = cum_df[cum_df["team_key"] == "human"].set_index("round")["cumulative_points"]
+    if human.empty:
+        return None
+
+    df = cum_df[cum_df["team_key"] != "human"].copy()
+    if df.empty:
+        return None
+
+    df["delta_vs_human"] = df.apply(
+        lambda r: float(r["cumulative_points"]) - float(human.get(int(r["round"]), 0)),
+        axis=1,
+    )
+    df = _add_race_label(df, calendar)
+    label_expr = _x_axis_labels_js(calendar)
+    tooltips = [
+        alt.Tooltip("race_label:N", title="Race"),
+        alt.Tooltip("team_name:N", title="Team"),
+        alt.Tooltip("delta_vs_human:Q", title="Vs human (cumulative)", format="+.0f"),
+        alt.Tooltip("cumulative_points:Q", title="Team cumulative", format=".0f"),
+    ]
+    if "chip" in df.columns:
+        tooltips.append(alt.Tooltip("chip:N", title="Chip used"))
+    if "chip_details" in df.columns:
+        tooltips.append(alt.Tooltip("chip_details:N", title="Chip details"))
+
+    rule_zero = (
+        alt.Chart(pd.DataFrame({"zero": [0]}))
+        .mark_rule(color="#888", strokeDash=[5, 5])
+        .encode(y="zero:Q")
+    )
+    lines = (
+        alt.Chart(df)
+        .mark_line(point=alt.OverlayMarkDef(size=80, filled=True), strokeWidth=3)
+        .encode(
+            x=alt.X(
+                "round:Q",
+                title="Round",
+                axis=alt.Axis(
+                    labelExpr=label_expr,
+                    labelAngle=-30,
+                    tickMinStep=1,
+                    values=calendar_rounds(calendar, include_cancelled=True),
+                ),
+            ),
+            y=alt.Y("delta_vs_human:Q", title="Points vs human (cumulative)"),
+            color=alt.Color(
+                "team_name:N",
+                scale=_color_scale(),
+                legend=alt.Legend(title=None, orient="top"),
+            ),
+            tooltip=tooltips,
+        )
+    )
+    chart = rule_zero + lines
+    if "chip_used" in df.columns:
+        chip_pts = df[df["chip_used"]].copy()
+        if not chip_pts.empty:
+            stars = (
+                alt.Chart(chip_pts)
+                .mark_text(text="★", dy=-12, fontSize=15, color="#FFD166")
+                .encode(
+                    x=alt.X("round:Q"),
+                    y=alt.Y("delta_vs_human:Q"),
+                )
+            )
+            chart = chart + stars
+    return chart.properties(height=380)
+
+
 _GANTT_EMPTY_COLOR = "#222230"      # not on team this round
 _GANTT_CANCELLED_COLOR = "#2a1414"  # round was cancelled
 

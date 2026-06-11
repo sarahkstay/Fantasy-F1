@@ -1,0 +1,8 @@
+-r requirements.txt
+
+# Jupyter / local analysis
+jupyter>=1.0.0
+ipykernel>=6.29.0
+
+# Testing
+pytest>=8.0.0

@@ -13,6 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from frontend.components import (
     cumulative_chart,
     delta_vs_human_chart,
+    delta_vs_human_cumulative_chart,
     inject_theme,
     per_round_chart,
     prediction_accuracy_chart,
@@ -153,15 +154,30 @@ else:
         st.altair_chart(per_round_chart(cum, calendar, sprint_rounds=sprint_rounds), use_container_width=True)
         st.caption("Side-by-side bars per race. ★ = sprint weekend (more scoring sessions → higher totals).")
     with tab_delta:
-        delta = delta_vs_human_chart(cum, calendar)
+        gap_mode = st.radio(
+            "Gap view",
+            options=["Round-by-round", "Cumulative"],
+            horizontal=True,
+            key="gap_to_human_mode",
+        )
+        if gap_mode == "Cumulative":
+            delta = delta_vs_human_cumulative_chart(cum, calendar)
+        else:
+            delta = delta_vs_human_chart(cum, calendar)
         if delta is None:
             st.info("Need at least one scored round for the human team to compute the gap.")
         else:
             st.altair_chart(delta, use_container_width=True)
-            st.caption(
-                "Round-by-round points gap versus the human team. Negative = behind that round; positive = ahead. "
-                "The dashed line is the 0 baseline."
-            )
+            if gap_mode == "Cumulative":
+                st.caption(
+                    "Cumulative gap versus the human team over time. Negative = behind overall; positive = ahead overall. "
+                    "The dashed line is the 0 baseline."
+                )
+            else:
+                st.caption(
+                    "Round-by-round points gap versus the human team. Negative = behind that round; positive = ahead. "
+                    "The dashed line is the 0 baseline."
+                )
     with tab_cum:
         st.altair_chart(cumulative_chart(cum, calendar), use_container_width=True)
         st.caption("Cumulative season totals. Always going up — use the other tabs for round-by-round insight.")

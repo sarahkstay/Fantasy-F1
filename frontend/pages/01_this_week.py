@@ -159,6 +159,27 @@ with wb:
 with wc:
     notes = st.text_input("Notes (kept in history)", value=str(weather.get("notes", "")))
 
+save_ctx_col1, save_ctx_col2 = st.columns([1, 3])
+with save_ctx_col1:
+    if st.button("Save this week context", key="save_week_context"):
+        cfg_now = update_weather_override(
+            get_working_config(),
+            int(round_number),
+            float(rain),
+            str(notes),
+            temperature_c=float(temp_c),
+        )
+        set_working_config(cfg_now)
+        st.success(
+            f"Saved race context for {format_round_label(calendar, int(round_number), short=True)} "
+            f"(rain {int(float(rain) * 100)}%, {float(temp_c):.1f}°C)."
+        )
+with save_ctx_col2:
+    st.caption(
+        "Use this before retrain/generate if you want to persist round + weather + notes "
+        "without running the optimizer yet."
+    )
+
 
 # ---------------------------------------------------------------------------
 # 2. Latest data (CSV uploads)
@@ -497,6 +518,25 @@ def _render_transfers(payload: dict) -> None:
         crows.append({"Constructor": c, "Name": meta.get("name", ""), "Price (£M)": meta.get("price", "")})
     st.dataframe(pd.DataFrame(crows), use_container_width=True, hide_index=True)
 
+    # Concentration risk hint: too many assets tied to one constructor increases
+    # crash/DNF correlation risk for a -20 weekend downside.
+    exposure: dict[str, int] = {}
+    for d in drivers:
+        ctor = str(drivers_cfg.get(d, {}).get("team", "")).lower().strip()
+        if ctor:
+            exposure[ctor] = exposure.get(ctor, 0) + 1
+    for c in constructors:
+        exposure[c] = exposure.get(c, 0) + 1
+    total_assets = max(1, len(drivers) + len(constructors))
+    if exposure:
+        top_team = max(exposure, key=exposure.get)
+        top_count = int(exposure[top_team])
+        if (top_count / total_assets) >= 0.40:
+            st.warning(
+                f"Concentration risk: {top_count}/{total_assets} assets are exposed to `{top_team}`. "
+                "If that team has an off-week (DNF/strategy issue), downside can compound."
+            )
+
     st.markdown("##### DRS Boost")
     drs = rec["drs_boost"]
     drs_meta = drivers_cfg.get(drs, {})
@@ -520,8 +560,12 @@ def _render_transfers(payload: dict) -> None:
         chips_left=chips_left,
         transfer_out=transfer_out,
         rain_prob=float(rain),
+        round_number=int(round_number),
+        total_rounds=int(season.get("total_rounds", 24)),
+        sprint_rounds=set(season.get("sprint_rounds", []) or []),
         is_sprint=int(round_number) in set(season.get("sprint_rounds", [])),
         predictions_df=preds_df,
+        prices_cfg=cfg.get("prices", {}),
     )
     if decision is None:
         if not chips_left:
@@ -543,15 +587,14 @@ def _chip_decision(
     chips_left: list[str],
     transfer_out: dict[str, Any],
     rain_prob: float,
+    round_number: int,
+    total_rounds: int,
+    sprint_rounds: set[int],
     is_sprint: bool,
     predictions_df: pd.DataFrame | None = None,
+    prices_cfg: dict[str, Any] | None = None,
 ) -> tuple[str, int, str] | None:
-    """Score each remaining chip 0-100; return the best if any clears the threshold.
-
-    Threshold is intentionally cautious (60+) because chips are scarce — better
-    to hold than to burn on a marginal weekend. Returns (chip, score, rationale)
-    or None if nothing recommended.
-    """
+    """Score each remaining chip 0-100 with a time-decaying threshold."""
     if not chips_left:
         return None
 
@@ -560,23 +603,67 @@ def _chip_decision(
     free_alw = int(transfer_out.get("free_transfer_allowance", 0))
     hits_needed = max(0, n_trans - free_alw)  # transfers over the free allowance
     expected_pts = float(rec_obj.get("expected_points_next_race", 0.0))
+    team_drivers = [str(d).upper() for d in (rec_obj.get("drivers", []) or [])]
+    team_ctors = [str(c).lower() for c in (rec_obj.get("constructors", []) or [])]
+    driver_meta = (prices_cfg or {}).get("drivers", {}) if isinstance(prices_cfg, dict) else {}
+
+    # Concentration proxy: too many assets exposed to one constructor.
+    exposure_counts: dict[str, int] = {}
+    for d in team_drivers:
+        ctor = str((driver_meta.get(d, {}) or {}).get("team", "")).lower().strip()
+        if ctor:
+            exposure_counts[ctor] = exposure_counts.get(ctor, 0) + 1
+    for c in team_ctors:
+        if c:
+            exposure_counts[c] = exposure_counts.get(c, 0) + 1
+    total_assets = max(1, len(team_drivers) + len(team_ctors))
+    max_exposure = max(exposure_counts.values()) if exposure_counts else 0
+    max_exposure_ratio = max_exposure / total_assets
+
+    rounds_left = max(1, int(total_rounds) - int(round_number) + 1)
+    sprints_left_including_now = len([r for r in sprint_rounds if int(r) >= int(round_number)])
 
     scores: dict[str, tuple[int, str]] = {}
     chips_set = {c.lower(): c for c in chips_left}
 
+    def _threshold_for_chip(chip_key: str) -> int:
+        # Baseline decays over season: early conservative, later more willing.
+        progress = min(1.0, max(0.0, float(round_number) / max(1.0, float(total_rounds))))
+        t = 66.0 - 18.0 * progress
+        if chip_key == "extra_drs_boost":
+            # If sprint opportunities are running out, use threshold should drop.
+            if sprints_left_including_now <= 1:
+                t -= 10.0
+            elif sprints_left_including_now <= 2:
+                t -= 6.0
+            elif sprints_left_including_now >= 5:
+                t += 5.0
+        elif chip_key in {"wildcard", "limitless"}:
+            # Late season: less future optionality, lower threshold.
+            if rounds_left <= 5:
+                t -= 6.0
+        return int(max(40, min(80, round(t))))
+
     # no_negative: scales with rain probability (DNF risk insurance, penalty is -20/driver)
     if "no_negative" in chips_set:
-        s = int(min(100, rain_prob * 130))  # 50% rain → 65; 80% → 100
-        if s >= 60:
+        # Crash/DNF proxy: weather + concentration risk + sprint volatility.
+        dnf_proxy = (0.65 * float(rain_prob)) + (1.1 * max(0.0, max_exposure_ratio - 0.28))
+        if is_sprint:
+            dnf_proxy += 0.08
+        s = int(min(100, max(0.0, dnf_proxy) * 140.0))
+        thresh = _threshold_for_chip("no_negative")
+        if s >= thresh:
+            exp_note = f"lineup exposure max {max_exposure}/{total_assets} assets on one constructor"
             scores[chips_set["no_negative"]] = (
-                s, f"Rain probability {rain_prob:.0%} means real DNF risk — chip prevents the -20pt hit per retirement."
+                s,
+                f"DNF/crash-risk proxy is elevated (rain {rain_prob:.0%}; {exp_note}) — "
+                "chip protects against the -20pt retirement downside.",
             )
 
     # extra_drs_boost: adds a SECOND DRS slot at 3× alongside the regular 2× slot.
     # Two drivers get boosted that weekend. Optimal assignment: 3× on the team's
     # top predicted scorer, 2× on the team's second-highest.
     if "extra_drs_boost" in chips_set and is_sprint:
-        team_drivers = list(rec_obj.get("drivers", []) or [])
         target_3x: str | None = None
         target_3x_pts: float | None = None
         target_2x: str | None = None
@@ -605,20 +692,42 @@ def _chip_decision(
             f"Sprint weekend — extra DRS Boost adds a second boost slot. "
             f"Play **3× on {_fmt(target_3x, target_3x_pts)}** (top scorer), "
             f"**2× on {_fmt(target_2x, target_2x_pts)}** (second highest). "
-            "Multipliers compound across qualifying + sprint + race."
+            f"Multipliers compound across qualifying + sprint + race. "
+            f"Sprint opportunities left (incl. now): {sprints_left_including_now}."
         )
-        scores[chips_set["extra_drs_boost"]] = (70, rationale)
+        s = 70 + (6 if sprints_left_including_now <= 2 else 0) - (4 if sprints_left_including_now >= 5 else 0)
+        thresh = _threshold_for_chip("extra_drs_boost")
+        if s >= thresh:
+            scores[chips_set["extra_drs_boost"]] = (int(max(0, min(100, s))), rationale)
 
     # wildcard: free unlimited transfers — worth it if you'd take 4+ hits to rebuild
     if "wildcard" in chips_set and hits_needed >= 4:
         s = min(100, 60 + hits_needed * 5)
-        scores[chips_set["wildcard"]] = (
-            s, f"Optimal rebuild requires {hits_needed} hits beyond free transfers — wildcard saves {hits_needed*10}+ pts in penalties."
-        )
+        thresh = _threshold_for_chip("wildcard")
+        if s >= thresh:
+            scores[chips_set["wildcard"]] = (
+                s,
+                f"Optimal rebuild requires {hits_needed} hits beyond free transfers — wildcard saves {hits_needed*10}+ pts in penalties.",
+            )
 
-    # limitless: ignore budget for one race — needs a clear "dream team" case
-    # Hard to detect from current outputs; require strong expected swing as proxy.
-    # Skipped for now — would need a separate optimization run without budget cap.
+    # Limitless heuristic: prioritize high-volatility weekends and late-season windows.
+    if "limitless" in chips_set:
+        s = 45
+        if is_sprint:
+            s += 12
+        if rain_prob >= 0.45:
+            s += 8
+        if rounds_left <= 6:
+            s += 8
+        if expected_pts >= 170:
+            s += 6
+        thresh = _threshold_for_chip("limitless")
+        if s >= thresh:
+            scores[chips_set["limitless"]] = (
+                int(max(0, min(100, s))),
+                f"High-variance weekend setup (sprint={is_sprint}, rain={rain_prob:.0%}, rounds left={rounds_left}) "
+                "supports a one-shot ceiling play.",
+            )
 
     # autopilot / final_fix: situational, hard to model — leave as "hold" by default.
 
