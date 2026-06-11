@@ -128,9 +128,9 @@ else:
 
 
 # ---------------------------------------------------------------------------
-# Per-round / gap-to-human / cumulative charts
+# Per-round / gap-to-human / cumulative performance charts
 # ---------------------------------------------------------------------------
-st.header("Points over time")
+st.header("Performance over time")
 cum = _drop_cancelled(cumulative_points_by_team(PROJECT_ROOT))
 chips = _drop_cancelled(load_chip_usage(PROJECT_ROOT))
 if not cum.empty:

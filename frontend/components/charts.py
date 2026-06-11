@@ -20,6 +20,7 @@ TEAM_VIZ_COLORS: dict[str, str] = {
     "Pure-AI Claude chat": "#FF8000",
     "Vibe-coded data science model": F1_RED,
 }
+CHIP_MARKER = "🪙"
 
 
 def _add_race_label(df: pd.DataFrame, calendar: dict[Any, Any]) -> pd.DataFrame:
@@ -128,7 +129,7 @@ def cumulative_chart(cum_df: pd.DataFrame, calendar: dict[Any, Any]) -> alt.Char
         if not chip_pts.empty:
             star = (
                 alt.Chart(chip_pts)
-                .mark_text(text="★", dy=-12, fontSize=15, color="#FFD166")
+                .mark_text(text=CHIP_MARKER, dy=-12, fontSize=14)
                 .encode(x="round:Q", y="cumulative_points:Q")
             )
             lines = lines + star
@@ -180,7 +181,7 @@ def per_round_chart(
         if not chip_pts.empty:
             stars = (
                 alt.Chart(chip_pts)
-                .mark_text(text="★", dy=-10, fontSize=14, color="#FFD166")
+                .mark_text(text=CHIP_MARKER, dy=-10, fontSize=13)
                 .encode(
                     x=alt.X("round:O", sort=alt.EncodingSortField("round")),
                     xOffset=alt.XOffset("team_name:N"),
@@ -244,7 +245,7 @@ def delta_vs_human_chart(cum_df: pd.DataFrame, calendar: dict[Any, Any]) -> alt.
         if not chip_pts.empty:
             stars = (
                 alt.Chart(chip_pts)
-                .mark_text(text="★", dy=-10, fontSize=14, color="#FFD166")
+                .mark_text(text=CHIP_MARKER, dy=-10, fontSize=13)
                 .encode(
                     x=alt.X("round:O", sort=alt.EncodingSortField("round")),
                     xOffset=alt.XOffset("team_name:N"),
@@ -316,7 +317,7 @@ def delta_vs_human_cumulative_chart(cum_df: pd.DataFrame, calendar: dict[Any, An
         if not chip_pts.empty:
             stars = (
                 alt.Chart(chip_pts)
-                .mark_text(text="★", dy=-12, fontSize=15, color="#FFD166")
+                .mark_text(text=CHIP_MARKER, dy=-12, fontSize=14)
                 .encode(
                     x=alt.X("round:Q"),
                     y=alt.Y("delta_vs_human:Q"),

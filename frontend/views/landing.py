@@ -107,10 +107,10 @@ if latest_round:
 
 
 # ---------------------------------------------------------------------------
-# Per-round points chart
+# Per-round performance chart
 # ---------------------------------------------------------------------------
 st.markdown("---")
-st.header("Points over time")
+st.header("Performance over time")
 
 _cfg_for_calendar = get_working_config()
 _calendar = _cfg_for_calendar.get("season", {}).get("calendar", {})
