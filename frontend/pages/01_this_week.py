@@ -298,20 +298,6 @@ with tabs[0]:
             f"Updated current team transfer state: free={int(manual_free)}, banked={int(manual_banked)}."
         )
 
-with tabs[1]:
-    text = _csv_input("race results", "race_res", _RACE_EXAMPLE)
-    if st.button("Save race results", key="save_race"):
-        res = ingest_race_results(text, PROJECT_ROOT, results_round, cfg=get_working_config())
-        if res.ok:
-            st.success(f"Saved {res.rows} drivers' race results for R{results_round} → {res.saved_path}")
-            for w in res.warnings:
-                st.warning(w)
-            if res.parsed is not None and not res.parsed.empty:
-                st.dataframe(res.parsed.head(10), use_container_width=True)
-        else:
-            for e in res.errors:
-                st.error(e)
-
 # ---------------------------------------------------------------------------
 # 3. Refresh model (optional but recommended after each race)
 # ---------------------------------------------------------------------------
