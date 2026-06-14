@@ -30,6 +30,8 @@ PyYAML>=6.0.1            # Parse config.yaml
 matplotlib>=3.9.0
 seaborn>=0.13.0
 streamlit>=1.40.0
+opencv-python-headless>=4.10.0
+rapidocr-onnxruntime>=1.4.3
 
 # NOTE:
 # Keep this file runtime-focused for Streamlit deployment stability.

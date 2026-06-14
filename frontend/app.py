@@ -40,6 +40,7 @@ public_pages = [
 owner_pages = [
     st.Page("pages/01_this_week.py", title="This Week"),
     st.Page("pages/02_score_round.py", title="Score Round"),
+    st.Page("pages/06_price_capture.py", title="Price Capture"),
 ]
 
 if is_owner():
