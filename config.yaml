@@ -625,7 +625,7 @@ optimizer:
 # --- Current Team State (update after each race) ---
 # Set this to your actual team after each race weekend.
 current_team:
-  drivers: ["RUS", "ALB", "GAS", "HAD", "BEA"]
+  drivers: ["BEA", "PER", "GAS", "RUS", "LIN"]
   constructors: ["ferrari", "haas"]
   drs_boost: "RUS"
   budget: 2.5        # Bank remaining after R3 transfers

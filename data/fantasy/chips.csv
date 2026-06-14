@@ -1,4 +1,22 @@
-round,team_key,team_name,chip,details
-2,human,Pure human judgement,extra_drs_boost,Played 3x DRS chip for China round.
-6,human,Pure human judgement,autopilot,Played autopilot chip for Miami.
-7,human,Pure human judgement,limitless,Played limitless chip for Canada.
+round,team_key,team_name,chip,details,drs_boost
+1,claude_chat,Pure-AI Claude chat,,,LEC
+1,human,Pure human judgement,,,VER
+1,model,Vibe-coded data science model,,,LAW
+2,claude_chat,Pure-AI Claude chat,,,LEC
+2,human,Pure human judgement,extra_drs_boost,Played 3x DRS chip in China (3x on RUS, 2x on ANT).,ANT
+2,model,Vibe-coded data science model,,,RUS
+3,claude_chat,Pure-AI Claude chat,,,ANT
+3,human,Pure human judgement,,,ANT
+3,model,Vibe-coded data science model,,,RUS
+6,claude_chat,Pure-AI Claude chat,,,ANT
+6,human,Pure human judgement,autopilot,Played autopilot chip for Miami.,RUS
+6,model,Vibe-coded data science model,,,RUS
+7,claude_chat,Pure-AI Claude chat,,,ANT
+7,human,Pure human judgement,limitless,Played limitless chip for Canada.,ANT
+7,model,Vibe-coded data science model,,,RUS
+8,claude_chat,Pure-AI Claude chat,,,ANT
+8,human,Pure human judgement,,,ANT
+8,model,Vibe-coded data science model,,,RUS
+9,claude_chat,Pure-AI Claude chat,,,ANT
+9,human,Pure human judgement,wildcard,Used wildcard chip in Barcelona (unlimited transfers).,ANT
+9,model,Vibe-coded data science model,,,RUS

@@ -41,3 +41,24 @@ round,team_key,asset,name,kind,points
 7,model,ALB,Albon,driver,-8.0
 7,model,ferrari,Ferrari,constructor,69.0
 7,model,haas,Haas,constructor,19.0
+9,human,HAM,Hamilton,driver,56.0
+9,human,ANT,Antonelli,driver,-8.0
+9,human,HUL,Hulkenberg,driver,-15.0
+9,human,GAS,Gasly,driver,17.0
+9,human,LAW,Lawson,driver,9.0
+9,human,racing_bulls,Racing Bulls,constructor,26.0
+9,human,ferrari,Ferrari,constructor,58.0
+9,claude_chat,ANT,Antonelli,driver,-8.0
+9,claude_chat,LEC,Leclerc,driver,0.0
+9,claude_chat,HAM,Hamilton,driver,56.0
+9,claude_chat,COL,Colapinto,driver,9.0
+9,claude_chat,OCO,Ocon,driver,8.0
+9,claude_chat,racing_bulls,Racing Bulls,constructor,26.0
+9,claude_chat,haas,Haas,constructor,16.0
+9,model,BEA,Bearman,driver,7.0
+9,model,PER,Perez,driver,8.0
+9,model,GAS,Gasly,driver,17.0
+9,model,RUS,Russell,driver,56.0
+9,model,LIN,Lindblad,driver,10.0
+9,model,ferrari,Ferrari,constructor,58.0
+9,model,haas,Haas,constructor,16.0
