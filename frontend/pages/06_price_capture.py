@@ -80,6 +80,11 @@ if out:
     if rows.empty:
         st.warning("No candidate prices found. Try a clearer/slower recording.")
     else:
+        target_total = int(len((cfg.get("prices", {}).get("drivers", {}) or {})) + len((cfg.get("prices", {}).get("constructors", {}) or {})))
+        detected_codes = set(rows["code"].astype(str)) if "code" in rows.columns else set()
+        coverage_count = int(len(detected_codes))
+        coverage_pct = (100.0 * coverage_count / max(1, target_total))
+
         c1, c2, c3 = st.columns(3)
         with c1:
             st.metric("Frames scanned", int(meta.get("frames_scanned", 0)))
@@ -87,8 +92,14 @@ if out:
             st.metric("Rows detected", int(len(rows)))
         with c3:
             st.metric("Needs review", int(rows["needs_review"].sum() if "needs_review" in rows.columns else 0))
+        st.progress(min(1.0, max(0.0, coverage_pct / 100.0)))
+        st.caption(f"Coverage: **{coverage_count}/{target_total} assets detected** ({coverage_pct:.0f}%).")
+
+        show_review_only = st.checkbox("Show only needs review", value=False, key="price_capture_show_review_only")
 
         editable = rows.copy()
+        if show_review_only and "needs_review" in editable.columns:
+            editable = editable[editable["needs_review"]].copy()
         editable["price"] = pd.to_numeric(editable["price"], errors="coerce")
         edited = st.data_editor(
             editable,

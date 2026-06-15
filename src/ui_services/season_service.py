@@ -113,7 +113,11 @@ def load_chip_usage(project_root: str | Path) -> pd.DataFrame:
     p = chips_path(project_root)
     if not p.exists():
         return pd.DataFrame(columns=["round", "team_key", "team_name", "chip", "details", "drs_boost"])
-    df = pd.read_csv(p)
+    try:
+        df = pd.read_csv(p)
+    except pd.errors.ParserError:
+        # Fail-open in UI: keep app usable even if a row in chips.csv is malformed.
+        df = pd.read_csv(p, engine="python", on_bad_lines="skip")
     if "team_name" not in df.columns and "team_key" in df.columns:
         df["team_name"] = df["team_key"].map(THREE_TEAM_LABELS).fillna(df["team_key"])
     if "details" not in df.columns:

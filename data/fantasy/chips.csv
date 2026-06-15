@@ -3,7 +3,7 @@ round,team_key,team_name,chip,details,drs_boost
 1,human,Pure human judgement,,,VER
 1,model,Vibe-coded data science model,,,LAW
 2,claude_chat,Pure-AI Claude chat,,,LEC
-2,human,Pure human judgement,extra_drs_boost,Played 3x DRS chip in China (3x on RUS, 2x on ANT).,ANT
+2,human,Pure human judgement,extra_drs_boost,Played 3x DRS chip in China (3x on RUS; 2x on ANT).,ANT
 2,model,Vibe-coded data science model,,,RUS
 3,claude_chat,Pure-AI Claude chat,,,ANT
 3,human,Pure human judgement,,,ANT
