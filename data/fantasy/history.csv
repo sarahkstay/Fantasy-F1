@@ -1,6 +1,6 @@
 round,locked_at,drivers,constructors,drs_boost,chips_used,chip_details,budget_after,free_transfers_after,banked_transfers_after,actual_points,notes
 1,2026-05-17T04:44:51Z,"BOR,LAW,PER,STR,SAI","ferrari,red_bull",LAW,,,0.0,2,0,124.0,Season opener — speculative budget picks (BOR + PER); DRS gamble on Lawson.
-2,2026-05-17T04:44:51Z,"BOR,LAW,PER,RUS,SAI","ferrari,racing_bulls",RUS,,,0.0,2,0,328.0,Sprint weekend. Swapped Stroll → Russell + Red Bull → Racing Bulls. DRS to Russell paid off (90 pts).
+2,2026-05-17T04:44:51Z,"BOR,LAW,PER,RUS,SAI","ferrari,racing_bulls",RUS,,,0.0,2,0,120.0,Sprint weekend. Swapped Stroll → Russell + Red Bull → Racing Bulls. DRS to Russell paid off (90 pts).
 3,2026-05-17T04:44:51Z,"LAW,SAI,RUS,BEA,GAS","ferrari,racing_bulls",RUS,,,0.0,2,0,161.0,Cut the budget gambles — sold BOR + PER for BEA + GAS. RUS keeps DRS.
 6,2026-05-17T04:44:51Z,"LAW,SAI,RUS,BEA,GAS","ferrari,racing_bulls",RUS,,,0.0,2,0,148.0,Missed the deadline — same team carried over from Japan into Miami. No active picks this round.
 7,2026-05-27T20:30:00Z,"RUS,ALB,GAS,HAD,BEA","ferrari,haas",RUS,,,2.5,2,1,120.0,Backfilled from Score Round to restore Canada in season history.

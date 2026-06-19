@@ -6,13 +6,27 @@ round,team_key,asset,name,kind,points
 1,model,PER,Perez,driver,4.0
 1,model,SAI,Sainz,driver,9.0
 1,model,STR,Stroll,driver,-23.0
-2,model,ferrari,Ferrari,constructor,119.0
-2,model,racing_bulls,Racing Bulls,constructor,50.0
-2,model,BOR,Bortoleto,driver,-14.0
-2,model,LAW,Lawson,driver,35.0
-2,model,PER,Perez,driver,20.0
-2,model,RUS,Russell,driver,90.0
-2,model,SAI,Sainz,driver,28.0
+2,claude_chat,haas,Haas,constructor,19.0
+2,claude_chat,racing_bulls,Racing Bulls,constructor,22.0
+2,claude_chat,ANT,Antonelli,driver,124.0
+2,claude_chat,BEA,Bearman,driver,10.0
+2,claude_chat,COL,Colapinto,driver,25.0
+2,claude_chat,HAM,Hamilton,driver,42.0
+2,claude_chat,LEC,Leclerc,driver,27.0
+2,human,mclaren,McLaren,constructor,33.0
+2,human,mercedes,Mercedes,constructor,76.0
+2,human,ANT,Antonelli,driver,124.0
+2,human,LEC,Leclerc,driver,27.0
+2,human,NOR,Norris,driver,6.0
+2,human,RUS,Russell,driver,4.0
+2,human,VER,Verstappen,driver,26.0
+2,model,ferrari,Ferrari,constructor,69.0
+2,model,haas,Haas,constructor,19.0
+2,model,ALB,Albon,driver,-8.0
+2,model,BEA,Bearman,driver,10.0
+2,model,GAS,Gasly,driver,16.0
+2,model,HAD,Hadjar,driver,6.0
+2,model,RUS,Russell,driver,8.0
 3,model,ferrari,Ferrari,constructor,75.0
 3,model,racing_bulls,Racing Bulls,constructor,18.0
 3,model,BEA,Bearman,driver,-14.0
