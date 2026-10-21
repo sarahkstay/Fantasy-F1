@@ -1,0 +1,568 @@
+{
+  "rounds": {
+    "8": {
+      "project_round": 8,
+      "circuit_id": "monaco",
+      "race_name": "Monaco Grand Prix",
+      "jolpica_round": 6,
+      "is_sprint": false,
+      "fetched_at": "2026-06-26T06:42:54Z",
+      "sessions": {
+        "qualifying": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        },
+        "race": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": [
+            "11 position mismatch(es) vs OpenF1"
+          ]
+        }
+      },
+      "validation": [
+        {
+          "session": "qualifying",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        },
+        {
+          "session": "race",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": false,
+          "mismatches": [
+            {
+              "driver_code": "GAS",
+              "jolpica": 3,
+              "openf1": 7
+            },
+            {
+              "driver_code": "HAD",
+              "jolpica": 4,
+              "openf1": 3
+            },
+            {
+              "driver_code": "PIA",
+              "jolpica": 5,
+              "openf1": 4
+            },
+            {
+              "driver_code": "LAW",
+              "jolpica": 6,
+              "openf1": 5
+            },
+            {
+              "driver_code": "LIN",
+              "jolpica": 7,
+              "openf1": 6
+            },
+            {
+              "driver_code": "ALO",
+              "jolpica": 10,
+              "openf1": 11
+            },
+            {
+              "driver_code": "BOR",
+              "jolpica": 11,
+              "openf1": 12
+            },
+            {
+              "driver_code": "RUS",
+              "jolpica": 12,
+              "openf1": 13
+            },
+            {
+              "driver_code": "HUL",
+              "jolpica": 13,
+              "openf1": 14
+            },
+            {
+              "driver_code": "COL",
+              "jolpica": 14,
+              "openf1": 15
+            },
+            {
+              "driver_code": "PER",
+              "jolpica": 15,
+              "openf1": 10
+            }
+          ]
+        }
+      ]
+    },
+    "10": {
+      "project_round": 10,
+      "circuit_id": "red_bull_ring",
+      "race_name": "Austrian Grand Prix",
+      "jolpica_round": 8,
+      "is_sprint": false,
+      "fetched_at": "2026-10-21T01:45:40Z",
+      "sessions": {
+        "qualifying": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        },
+        "race": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        }
+      },
+      "validation": [
+        {
+          "session": "qualifying",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        },
+        {
+          "session": "race",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        }
+      ]
+    },
+    "11": {
+      "project_round": 11,
+      "circuit_id": "silverstone",
+      "race_name": "British Grand Prix",
+      "jolpica_round": 9,
+      "is_sprint": true,
+      "fetched_at": "2026-10-21T01:45:46Z",
+      "sessions": {
+        "sprint_qualifying": {
+          "source": "derived",
+          "rows": 22,
+          "warnings": []
+        },
+        "sprint": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": [
+            "3 position mismatch(es) vs OpenF1"
+          ]
+        },
+        "qualifying": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        },
+        "race": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": [
+            "6 position mismatch(es) vs OpenF1"
+          ]
+        }
+      },
+      "validation": [
+        {
+          "session": "sprint",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": false,
+          "mismatches": [
+            {
+              "driver_code": "BOR",
+              "jolpica": 13,
+              "openf1": 14
+            },
+            {
+              "driver_code": "BEA",
+              "jolpica": 14,
+              "openf1": 15
+            },
+            {
+              "driver_code": "HUL",
+              "jolpica": 15,
+              "openf1": 13
+            }
+          ]
+        },
+        {
+          "session": "qualifying",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        },
+        {
+          "session": "race",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": false,
+          "mismatches": [
+            {
+              "driver_code": "BEA",
+              "jolpica": 12,
+              "openf1": 13
+            },
+            {
+              "driver_code": "OCO",
+              "jolpica": 13,
+              "openf1": 14
+            },
+            {
+              "driver_code": "PER",
+              "jolpica": 14,
+              "openf1": 15
+            },
+            {
+              "driver_code": "ANT",
+              "jolpica": 15,
+              "openf1": 16
+            },
+            {
+              "driver_code": "BOT",
+              "jolpica": 16,
+              "openf1": 17
+            },
+            {
+              "driver_code": "SAI",
+              "jolpica": 17,
+              "openf1": 12
+            }
+          ]
+        }
+      ]
+    },
+    "12": {
+      "project_round": 12,
+      "circuit_id": "spa",
+      "race_name": "Belgian Grand Prix",
+      "jolpica_round": 10,
+      "is_sprint": false,
+      "fetched_at": "2026-10-21T01:45:54Z",
+      "sessions": {
+        "qualifying": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        },
+        "race": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        }
+      },
+      "validation": [
+        {
+          "session": "qualifying",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        },
+        {
+          "session": "race",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        }
+      ]
+    },
+    "13": {
+      "project_round": 13,
+      "circuit_id": "hungaroring",
+      "race_name": "Hungarian Grand Prix",
+      "jolpica_round": 11,
+      "is_sprint": false,
+      "fetched_at": "2026-10-21T01:45:59Z",
+      "sessions": {
+        "qualifying": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        },
+        "race": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        }
+      },
+      "validation": [
+        {
+          "session": "qualifying",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        },
+        {
+          "session": "race",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        }
+      ]
+    },
+    "14": {
+      "project_round": 14,
+      "circuit_id": "zandvoort",
+      "race_name": "Dutch Grand Prix",
+      "jolpica_round": 12,
+      "is_sprint": true,
+      "fetched_at": "2026-10-21T01:46:05Z",
+      "sessions": {
+        "sprint_qualifying": {
+          "source": "derived",
+          "rows": 22,
+          "warnings": []
+        },
+        "sprint": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        },
+        "qualifying": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        },
+        "race": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        }
+      },
+      "validation": [
+        {
+          "session": "sprint",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        },
+        {
+          "session": "qualifying",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        },
+        {
+          "session": "race",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        }
+      ]
+    },
+    "15": {
+      "project_round": 15,
+      "circuit_id": "monza",
+      "race_name": "Italian Grand Prix",
+      "jolpica_round": 13,
+      "is_sprint": false,
+      "fetched_at": "2026-10-21T01:46:13Z",
+      "sessions": {
+        "qualifying": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        },
+        "race": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        }
+      },
+      "validation": [
+        {
+          "session": "qualifying",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        },
+        {
+          "session": "race",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        }
+      ]
+    },
+    "17": {
+      "project_round": 17,
+      "circuit_id": "baku",
+      "race_name": "Azerbaijan Grand Prix",
+      "jolpica_round": 15,
+      "is_sprint": false,
+      "fetched_at": "2026-10-21T01:46:25Z",
+      "sessions": {
+        "qualifying": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        },
+        "race": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": [
+            "3 position mismatch(es) vs OpenF1"
+          ]
+        }
+      },
+      "validation": [
+        {
+          "session": "qualifying",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        },
+        {
+          "session": "race",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": false,
+          "mismatches": [
+            {
+              "driver_code": "PIA",
+              "jolpica": 13,
+              "openf1": 14
+            },
+            {
+              "driver_code": "PER",
+              "jolpica": 14,
+              "openf1": 15
+            },
+            {
+              "driver_code": "BOR",
+              "jolpica": 15,
+              "openf1": 13
+            }
+          ]
+        }
+      ]
+    },
+    "18": {
+      "project_round": 18,
+      "circuit_id": "marina_bay",
+      "race_name": "Singapore Grand Prix",
+      "jolpica_round": 16,
+      "is_sprint": true,
+      "fetched_at": "2026-10-21T01:46:30Z",
+      "sessions": {
+        "sprint": {
+          "source": "openf1",
+          "rows": 22,
+          "warnings": []
+        },
+        "qualifying": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        },
+        "race": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        }
+      },
+      "validation": [
+        {
+          "session": "qualifying",
+          "openf1_available": false,
+          "agree": null,
+          "mismatches": []
+        },
+        {
+          "session": "race",
+          "openf1_available": false,
+          "agree": null,
+          "mismatches": []
+        }
+      ]
+    },
+    "19": {
+      "project_round": 19,
+      "circuit_id": "cota",
+      "race_name": "United States Grand Prix",
+      "jolpica_round": 17,
+      "is_sprint": false,
+      "fetched_at": "2026-10-21T01:46:35Z",
+      "sessions": {
+        "qualifying": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        },
+        "race": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        }
+      },
+      "validation": [
+        {
+          "session": "qualifying",
+          "openf1_available": false,
+          "agree": null,
+          "mismatches": []
+        },
+        {
+          "session": "race",
+          "openf1_available": false,
+          "agree": null,
+          "mismatches": []
+        }
+      ]
+    },
+    "16": {
+      "project_round": 16,
+      "circuit_id": "madrid",
+      "race_name": "Spanish Grand Prix",
+      "jolpica_round": 14,
+      "is_sprint": false,
+      "fetched_at": "2026-10-21T01:47:08Z",
+      "sessions": {
+        "qualifying": {
+          "source": "jolpica",
+          "rows": 20,
+          "warnings": []
+        },
+        "race": {
+          "source": "jolpica",
+          "rows": 22,
+          "warnings": []
+        }
+      },
+      "validation": [
+        {
+          "session": "qualifying",
+          "openf1_available": true,
+          "compared": 20,
+          "agree": true,
+          "mismatches": []
+        },
+        {
+          "session": "race",
+          "openf1_available": true,
+          "compared": 22,
+          "agree": true,
+          "mismatches": []
+        }
+      ]
+    }
+  },
+  "last_ingest": {
+    "at": "2026-10-21T01:47:08Z",
+    "project_round": 16,
+    "race_name": "Spanish Grand Prix",
+    "ok": true
+  }
+}

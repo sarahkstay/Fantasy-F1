@@ -10,5 +10,27 @@ round,team_key,team_name,points
 7,claude_chat,Pure-AI Claude chat,269.0
 7,human,Pure human judgement,296.0
 7,model,Vibe-coded data science model,120.0
+8,claude_chat,Pure-AI Claude chat,165.0
+8,human,Pure human judgement,110.0
 9,claude_chat,Pure-AI Claude chat,107.0
 9,human,Pure human judgement,143.0
+10,claude_chat,Pure-AI Claude chat,114.0
+10,human,Pure human judgement,129.0
+11,claude_chat,Pure-AI Claude chat,155.0
+11,human,Pure human judgement,179.0
+12,claude_chat,Pure-AI Claude chat,118.0
+12,human,Pure human judgement,140.0
+13,claude_chat,Pure-AI Claude chat,107.0
+13,human,Pure human judgement,128.0
+14,claude_chat,Pure-AI Claude chat,63.0
+14,human,Pure human judgement,159.0
+15,claude_chat,Pure-AI Claude chat,98.0
+15,human,Pure human judgement,120.0
+16,claude_chat,Pure-AI Claude chat,92.0
+16,human,Pure human judgement,82.0
+17,claude_chat,Pure-AI Claude chat,47.0
+17,human,Pure human judgement,44.0
+18,claude_chat,Pure-AI Claude chat,119.0
+18,human,Pure human judgement,165.0
+19,claude_chat,Pure-AI Claude chat,99.0
+19,human,Pure human judgement,143.0
