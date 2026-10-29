@@ -481,7 +481,7 @@ ROUND_TO_CIRCUIT_2026: dict[int, str] = {
     13: "hungaroring",
     14: "zandvoort",
     15: "monza",
-    16: "valencia",
+    16: "madrid",
     17: "baku",
     18: "marina_bay",
     19: "cota",

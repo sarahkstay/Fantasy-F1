@@ -4,4 +4,15 @@ round,locked_at,drivers,constructors,drs_boost,chips_used,chip_details,budget_af
 3,2026-05-17T04:44:51Z,"LAW,SAI,RUS,BEA,GAS","ferrari,racing_bulls",RUS,,,0.0,2,0,161.0,Cut the budget gambles — sold BOR + PER for BEA + GAS. RUS keeps DRS.
 6,2026-05-17T04:44:51Z,"LAW,SAI,RUS,BEA,GAS","ferrari,racing_bulls",RUS,,,0.0,2,0,148.0,Missed the deadline — same team carried over from Japan into Miami. No active picks this round.
 7,2026-05-27T20:30:00Z,"RUS,ALB,GAS,HAD,BEA","ferrari,haas",RUS,,,2.5,2,1,120.0,Backfilled from Score Round to restore Canada in season history.
-9,2026-06-14T23:30:00Z,"BEA,PER,GAS,RUS,LIN","ferrari,haas",RUS,,,2.5,2,1,172.0,Barcelona backfill from manual submission (provisional pending F1 Fantasy Monaco/Gasly review adjustments).
+8,2026-06-07T23:30:00Z,"RUS,ALB,GAS,HAD,BEA","ferrari,haas",RUS,,,2.5,2,1,53.0,Monaco finalised score entered from official F1 Fantasy totals.
+9,2026-06-14T23:30:00Z,"BEA,PER,GAS,RUS,LIN","ferrari,haas",RUS,,,2.5,2,1,172.0,Barcelona backfill from manual submission (finalised after Monaco/Gasly points adjustment).
+10,2026-10-21T01:51:41Z,"BEA,PER,GAS,RUS,LIN","ferrari,haas",RUS,,,2.5,2,1,77.0,Auto-backfilled estimate from public race/quali/sprint data; unchanged lineup assumption.
+11,2026-10-21T01:51:41Z,"BEA,PER,GAS,RUS,LIN","ferrari,haas",RUS,,,2.5,2,1,129.0,Auto-backfilled estimate from public race/quali/sprint data; unchanged lineup assumption.
+12,2026-10-21T01:51:41Z,"BEA,PER,GAS,RUS,LIN","ferrari,haas",RUS,,,2.5,2,1,-2.0,Auto-backfilled estimate from public race/quali/sprint data; unchanged lineup assumption.
+13,2026-10-21T01:51:41Z,"BEA,PER,GAS,RUS,LIN","ferrari,haas",RUS,,,2.5,2,1,39.0,Auto-backfilled estimate from public race/quali/sprint data; unchanged lineup assumption.
+14,2026-10-21T01:51:41Z,"BEA,PER,GAS,RUS,LIN","ferrari,haas",RUS,,,2.5,2,1,52.0,Auto-backfilled estimate from public race/quali/sprint data; unchanged lineup assumption.
+15,2026-10-21T01:51:41Z,"BEA,PER,GAS,RUS,LIN","ferrari,haas",RUS,,,2.5,2,1,74.0,Auto-backfilled estimate from public race/quali/sprint data; unchanged lineup assumption.
+16,2026-10-21T01:51:41Z,"BEA,PER,GAS,RUS,LIN","ferrari,haas",RUS,,,2.5,2,1,34.0,Auto-backfilled estimate from public race/quali/sprint data; unchanged lineup assumption.
+17,2026-10-21T01:51:41Z,"BEA,PER,GAS,RUS,LIN","ferrari,haas",RUS,,,2.5,2,1,119.0,Auto-backfilled estimate from public race/quali/sprint data; unchanged lineup assumption.
+18,2026-10-21T01:51:41Z,"BEA,PER,GAS,RUS,LIN","ferrari,haas",RUS,,,2.5,2,1,12.0,Auto-backfilled estimate from public race/quali/sprint data; unchanged lineup assumption.
+19,2026-10-21T01:51:41Z,"BEA,PER,GAS,RUS,LIN","ferrari,haas",RUS,,,2.5,2,1,65.0,Auto-backfilled estimate from public race/quali/sprint data; unchanged lineup assumption.

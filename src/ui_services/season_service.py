@@ -10,6 +10,7 @@ Functions here are pure (no Streamlit calls) so they're testable.
 
 from __future__ import annotations
 
+import csv
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -39,11 +40,51 @@ def breakdowns_path(project_root: str | Path) -> Path:
 _BREAKDOWN_COLS = ["round", "team_key", "asset", "name", "kind", "points"]
 
 
+def _read_csv_fail_open(path: Path, columns: list[str]) -> pd.DataFrame:
+    """Read a CSV defensively so malformed owner-entered rows don't crash the UI."""
+    if not path.exists():
+        return pd.DataFrame(columns=columns)
+    try:
+        return pd.read_csv(path)
+    except pd.errors.ParserError:
+        pass
+    try:
+        return pd.read_csv(path, engine="python", on_bad_lines="skip")
+    except (pd.errors.ParserError, ValueError):
+        pass
+    try:
+        # Last resort: disable quote handling and skip malformed rows.
+        return pd.read_csv(
+            path,
+            engine="python",
+            on_bad_lines="skip",
+            quoting=csv.QUOTE_NONE,
+            escapechar="\\",
+        )
+    except Exception:
+        return pd.DataFrame(columns=columns)
+
+
+def _coerce_round_col(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize round values like '10|7' -> 7 and drop unparseable rows."""
+    if "round" not in df.columns or df.empty:
+        return df
+    out = df.copy()
+    extracted = (
+        out["round"]
+        .astype(str)
+        .str.extract(r"(\d+)$", expand=False)
+    )
+    out["round"] = pd.to_numeric(extracted, errors="coerce").astype("Int64")
+    out = out[out["round"].notna()].copy()
+    out["round"] = out["round"].astype(int)
+    return out
+
+
 def load_breakdowns(project_root: str | Path) -> pd.DataFrame:
     p = breakdowns_path(project_root)
-    if not p.exists():
-        return pd.DataFrame(columns=_BREAKDOWN_COLS)
-    return pd.read_csv(p)
+    df = _read_csv_fail_open(p, _BREAKDOWN_COLS)
+    return _coerce_round_col(df)
 
 
 def append_breakdown(
@@ -100,26 +141,30 @@ def load_history(project_root: str | Path) -> pd.DataFrame:
 def load_competitor_history(project_root: str | Path) -> pd.DataFrame:
     """Returns a long-form df: round, team_key, team_name, points."""
     p = competitors_path(project_root)
-    if not p.exists():
-        return pd.DataFrame(columns=["round", "team_key", "team_name", "points"])
-    df = pd.read_csv(p)
+    cols = ["round", "team_key", "team_name", "points"]
+    df = _read_csv_fail_open(p, cols)
+    df = _coerce_round_col(df)
     if "team_name" not in df.columns and "team_key" in df.columns:
         df["team_name"] = df["team_key"].map(THREE_TEAM_LABELS).fillna(df["team_key"])
+    if "points" not in df.columns:
+        df["points"] = 0.0
     return df
 
 
 def load_chip_usage(project_root: str | Path) -> pd.DataFrame:
     """Long-form team metadata log: round, team_key, chip, details, drs_boost."""
     p = chips_path(project_root)
-    if not p.exists():
-        return pd.DataFrame(columns=["round", "team_key", "team_name", "chip", "details", "drs_boost"])
-    df = pd.read_csv(p)
+    cols = ["round", "team_key", "team_name", "chip", "details", "drs_boost"]
+    df = _read_csv_fail_open(p, cols)
+    df = _coerce_round_col(df)
     if "team_name" not in df.columns and "team_key" in df.columns:
         df["team_name"] = df["team_key"].map(THREE_TEAM_LABELS).fillna(df["team_key"])
     if "details" not in df.columns:
         df["details"] = ""
     if "drs_boost" not in df.columns:
         df["drs_boost"] = ""
+    if "chip" not in df.columns:
+        df["chip"] = ""
     return df
 
 
